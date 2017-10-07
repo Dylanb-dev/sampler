@@ -12,21 +12,37 @@ const AlbumArtIcon = ({ imgUrl, onStart, onEnd }) => (
       height: '128px',
       width: '128px',
       margin: '32px',
-      borderRadius: '100%',
-      backgroundImage: `url(${imgUrl})`,
-      backgroundSize: 'cover'
+      borderRadius: '100%'
     }}
     onMouseDown={onStart}
     onMouseUp={onEnd}
   />
 )
 
-const SongText = ({ song }) => (
-  <div style={{ color: 'white', margin: '8px', fontSize: '32px' }}>{song}</div>
+const SongText = ({ song, isBlur }) => (
+  <div
+    style={{
+      color: `${isBlur ? 'transparent' : 'white'}`,
+      margin: '8px',
+      fontSize: '32px',
+      textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
+      transition: '400ms ease 50ms'
+    }}
+  >
+    {song}
+  </div>
 )
 
-const ArtistText = ({ artist }) => (
-  <div style={{ color: 'white', margin: '8px', fontSize: '24px' }}>
+const ArtistText = ({ artist, isBlur }) => (
+  <div
+    style={{
+      color: `${isBlur ? 'transparent' : 'white'}`,
+      margin: '8px',
+      fontSize: '24px',
+      textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
+      transition: '400ms ease 50ms'
+    }}
+  >
     {artist}
   </div>
 )
@@ -40,7 +56,12 @@ class App extends Component {
     // eslint-disable-next-line
     super()
     // eslint-disable-next-line
-    this.state = { mouseXY: [0, 0], isPressed: false, mouseCircleDelta: [0, 0] }
+    this.state = {
+      mouseXY: [0, 0],
+      isPressed: false,
+      mouseCircleDelta: [0, 0],
+      imgUrl: 'https://i.scdn.co/image/f2798ddab0c7b76dc2d270b65c4f67ddef7f6718'
+    }
   }
 
   componentDidMount() {
@@ -59,7 +80,6 @@ class App extends Component {
     this.handleMouseDown(pressLocation, e.touches[0])
 
   handleTouchMove = e => {
-    e.preventDefault()
     this.handleMouseMove(e.touches[0])
   }
 
@@ -81,11 +101,15 @@ class App extends Component {
   }
 
   handleMouseUp = () => {
-    this.setState({ isPressed: false, mouseCircleDelta: [0, 0] })
+    this.setState({
+      isPressed: false,
+      mouseCircleDelta: [0, 0],
+      mouseXY: [0, 0]
+    })
   }
 
   render() {
-    const { mouseXY, isPressed } = this.state
+    const { mouseXY, isPressed, imgUrl } = this.state
     const [x, y] = mouseXY
     const style = isPressed
       ? {
@@ -95,39 +119,111 @@ class App extends Component {
           boxShadow: spring((x - (3 * width - 50) / 2) / 15, springSetting1)
         }
       : {
-          translateX: x,
-          translateY: y,
-          scale: spring(1.2, springSetting1),
+          translateX: 0,
+          translateY: 0,
+          scale: spring(1.0, springSetting1),
           boxShadow: spring((x - (3 * width - 50) / 2) / 15, springSetting1)
         }
+
+    const isAccept = () => x > 100
+    const isDecline = () => x < -100
+
     return (
       <AppContainer>
-        <SongText song={'test song'} />
-        <ArtistText artist={'test artist'} />
-        <Motion style={style}>
-          {({ translateX, translateY, scale, boxShadow }) => (
+        <FlexBetween>
+          <ColumnSection>
             <div
-              onMouseDown={this.handleMouseDown.bind(null, [x, y])}
-              onTouchStart={this.handleTouchStart.bind(null, [x, y])}
-              className="demo2-ball"
               style={{
-                WebkitTransform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-                transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-                boxShadow: `${boxShadow}px 5px 5px rgba(0,0,0,0.5)`
+                height: '100%',
+                width: '100%',
+                backgroundColor: `${isPressed && isDecline()
+                  ? 'red'
+                  : 'transparent'}`,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
               }}
             >
-              <AlbumArtIcon
-                imgUrl={
-                  'https://i.scdn.co/image/f2798ddab0c7b76dc2d270b65c4f67ddef7f6718'
-                }
-              />
+              <div
+                style={{
+                  color: `${isPressed ? 'white' : 'transparent'}`,
+                  fontSize: '24px',
+                  transition: '400ms ease 50ms'
+                }}
+              >
+                X
+              </div>
             </div>
-          )}
-        </Motion>
+          </ColumnSection>
+          <ColumnSection>
+            <SongText song={'test song'} isBlur={isPressed} />
+            <ArtistText artist={'test artist'} isBlur={isPressed} />
+            <Motion style={style}>
+              {({ translateX, translateY, scale, boxShadow }) => (
+                <div
+                  onMouseDown={this.handleMouseDown.bind(null, [x, y])}
+                  onTouchStart={this.handleTouchStart.bind(null, [x, y])}
+                  style={{
+                    borderRadius: '100%',
+                    WebkitTransform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
+                    transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
+                    boxShadow: `${boxShadow}px 5px 5px rgba(0,0,0,0.5)`,
+                    backgroundImage: `url(${imgUrl})`,
+                    height: '128px',
+                    width: '128px',
+                    margin: '32px',
+                    backgroundSize: 'cover'
+                  }}
+                />
+              )}
+            </Motion>
+          </ColumnSection>
+          <ColumnSection>
+            <div
+              style={{
+                height: '100%',
+                width: '100%',
+                backgroundColor: `${isPressed && isAccept()
+                  ? 'green'
+                  : 'transparent'}`,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <div
+                style={{
+                  color: `${isPressed ? 'white' : 'transparent'}`,
+                  fontSize: '24px',
+                  transition: '400ms ease 50ms'
+                }}
+              >
+                {'\u2714'}
+              </div>
+            </div>
+          </ColumnSection>
+        </FlexBetween>
       </AppContainer>
     )
   }
 }
+
+const ColumnSection = ({ children }) => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      alignItems: 'center',
+      height: '100%',
+      width: '100%'
+    }}
+  >
+    {children}
+  </div>
+)
 
 const AppContainer = ({ children }) => (
   <div
@@ -135,6 +231,9 @@ const AppContainer = ({ children }) => (
       background: 'linear-gradient(#146E14,#181818)',
       height: '100%',
       minHeight: '100vh',
+      maxHeight: '100vh',
+      minWidth: '100vw',
+      maxWidth: '100vw',
       display: 'flex',
       justifyContent: 'center',
       flexDirection: 'column',
@@ -145,11 +244,13 @@ const AppContainer = ({ children }) => (
   </div>
 )
 
-const FlexCenter = ({ children }) => (
+const FlexBetween = ({ children }) => (
   <div
     style={{
+      width: '100%',
+      height: '100vh',
       display: 'flex',
-      justifyContent: 'center'
+      justifyContent: 'space-between'
     }}
   >
     {children}
