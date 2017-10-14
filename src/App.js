@@ -1,55 +1,23 @@
 /* eslint-disable */
 
 import React, { Component } from 'react'
-import { getSpotifyUrl, getMeInformation } from './spotify'
+import {
+  getSpotifyUrl,
+  getMeInformation,
+  createPlaylist,
+  search,
+  getRelatedArtist
+} from './spotify'
 import { Motion, spring } from 'react-motion'
+import { isEmpty } from 'lodash/fp'
 
 import './App.css'
 
-const AlbumArtIcon = ({ imgUrl, onStart, onEnd }) => (
-  <div
-    role="presentation"
-    style={{
-      height: '128px',
-      width: '128px',
-      margin: '32px',
-      borderRadius: '100%'
-    }}
-    onMouseDown={onStart}
-    onMouseUp={onEnd}
-  />
-)
-
-const SongText = ({ song, isBlur }) => (
-  <div
-    style={{
-      color: `${isBlur ? 'transparent' : 'white'}`,
-      margin: '8px',
-      fontSize: '32px',
-      textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
-      transition: '400ms ease 50ms'
-    }}
-  >
-    {song}
-  </div>
-)
-
-const ArtistText = ({ artist, isBlur }) => (
-  <div
-    style={{
-      color: `${isBlur ? 'transparent' : 'white'}`,
-      margin: '8px',
-      fontSize: '24px',
-      textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
-      transition: '400ms ease 50ms'
-    }}
-  >
-    {artist}
-  </div>
-)
-
 const springSetting1 = { stiffness: 180, damping: 10 }
 const [count, width, height] = [11, 70, 90]
+
+const randomNumber = maxLen => Math.floor(Math.random() * (maxLen + 1))
+
 // eslint-disable-next-line
 class App extends Component {
   // eslint-disable-next-line
@@ -58,12 +26,16 @@ class App extends Component {
     super()
     // eslint-disable-next-line
     this.state = {
+      id: '-----------',
       mouseXY: [0, 0],
       isPressed: false,
       mouseCircleDelta: [0, 0],
       appWidth: Math.min(420, window.innerWidth),
       spotifyUrl: getSpotifyUrl(),
-      imgUrl: 'https://i.scdn.co/image/f2798ddab0c7b76dc2d270b65c4f67ddef7f6718'
+      songArray: [],
+      currentSong: {},
+      songSearchText: 'in the shadows tonight',
+      songSearchSuggestions: []
     }
     if (!window.location.pathname.includes('callback')) {
       window.location = this.state.spotifyUrl
@@ -79,6 +51,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    const { type, token } = this.state
     // eslint-disable-next-line
     window.addEventListener('touchmove', this.handleTouchMove)
     // eslint-disable-next-line
@@ -87,6 +60,10 @@ class App extends Component {
     window.addEventListener('mousemove', this.handleMouseMove)
     // eslint-disable-next-line
     window.addEventListener('mouseup', this.handleMouseUp)
+
+    getMeInformation({ type, token }).fork(console.error, res =>
+      this.setState({ id: res.id })
+    )
   }
 
   handleTouchStart = (pressLocation, e) =>
@@ -114,33 +91,92 @@ class App extends Component {
   }
 
   testRequest = () => {
-    const { type, token } = this.state
-    getMeInformation({ type, token }).fork(console.log, console.error)
+    const { type, token, id } = this.state
+    createPlaylist({ type, token })({ id, playlist: 'test1' }).fork(
+      console.error,
+      console.log
+    )
   }
 
-  handleMouseUp = () => {
-    const { appWidth, mouseXY } = this.state
-    const [x, y] = mouseXY
+  searchTrack = () => {
+    const { type, token, songSearchText } = this.state
+    search({ type, token })(songSearchText).fork(console.error, res =>
+      this.setState({
+        currentSong: res.tracks.items
+          .filter(o => o.preview_url)
+          .sort((a, b) => a.popularity - b.popularity)[0]
+      })
+    )
+  }
 
-    if (this.isAccept(x)) {
-      console.log('accept')
-    }
-    if (this.isDecline(x)) {
-      console.log('refuse')
-    }
+  playNextSong = () => {
+    const { type, token, currentSong, songArray } = this.state
+
+    let index = songArray
+
+    return getRelatedArtist({ type, token })(currentSong.artists[0].id)
+      .chain(artistRes =>
+        search({ type, token })(
+          artistRes.artists.length > 1
+            ? artistRes.artists[randomNumber(artistRes.artists.length - 1)].name
+            : currentSong.name
+        )
+      )
+      .fork(console.error, res =>
+        this.setState({
+          currentSong: res.tracks.items
+            .filter(o => o.preview_url)
+            .sort((a, b) => a.popularity - b.popularity)[0]
+        })
+      )
+  }
+
+  resetAlbumPostion = () =>
     this.setState({
       isPressed: false,
       mouseCircleDelta: [0, 0],
       mouseXY: [0, 0]
     })
+
+  handleMouseUp = () => {
+    const { appWidth, mouseXY, songArray, currentSong } = this.state
+    const [x, y] = mouseXY
+
+    if (this.isAccept({ x, appWidth })) {
+      console.log('accept')
+      this.setState({ songArray: [...songArray, currentSong] })
+      this.resetAlbumPostion()
+      return this.playNextSong()
+    }
+    if (this.isDecline({ x, appWidth })) {
+      console.log('refuse')
+      this.resetAlbumPostion()
+      return this.playNextSong()
+    }
+    return this.resetAlbumPostion()
   }
 
   isAccept = ({ x, appWidth }) => x > (appWidth - 128 * 1.2) / 2 - 10
   isDecline = ({ x, appWidth }) => x < -((appWidth - 128 * 1.2) / 2 - 10)
 
-  render() {
-    const { appWidth, mouseXY, isPressed, imgUrl, spotifyUrl } = this.state
+  handleSongTextChange = e => {
+    e.preventDefault()
+    this.setState({ songSearchText: e })
+  }
 
+  render() {
+    const {
+      appWidth,
+      mouseXY,
+      isPressed,
+      spotifyUrl,
+      id,
+      songSearchText,
+      currentSong,
+      songArray
+    } = this.state
+
+    // console.log(currentSong)
     const [x, y] = mouseXY
 
     const maxX = (appWidth - 128 * 1.2) / 2
@@ -168,86 +204,113 @@ class App extends Component {
     return (
       <AppContainer>
         <div style={{ width: '100%', maxWidth: '420px' }}>
-          <FlexBetween>
-            <ColumnSection>
-              <div
-                style={{
-                  height: '100%',
-                  width: '100%',
-                  backgroundColor: `${isPressed &&
-                  this.isDecline({ x, appWidth })
-                    ? 'red'
-                    : 'transparent'}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
+          {isEmpty(currentSong) ? (
+            <FlexVerticalCenter>
+              <SongText song={`Hello, ${id}`} isBlur={false} />
+              <ArtistText
+                artist={'Please enter a song to get started'}
+                isBlur={false}
+              />
+              <SongInput
+                onSubmit={this.searchTrack}
+                onChange={this.handleSongTextChange}
+                value={songSearchText}
+              />
+            </FlexVerticalCenter>
+          ) : (
+            <FlexBetween>
+              <ColumnSection>
                 <div
                   style={{
-                    color: `${isPressed ? 'white' : 'transparent'}`,
-                    fontSize: '24px',
-                    marginTop: '80px',
-                    transition: '400ms ease 50ms'
+                    height: '100%',
+                    width: '100%',
+                    backgroundColor: `${isPressed &&
+                    this.isDecline({ x, appWidth })
+                      ? 'red'
+                      : 'transparent'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
                   }}
                 >
-                  X
-                </div>
-              </div>
-            </ColumnSection>
-            <ColumnSection>
-              <button onClick={this.testRequest}>TEST REQUEST</button>
-              <SongText song={'test song'} isBlur={isPressed} />
-              <ArtistText artist={'test artist'} isBlur={isPressed} />
-              <Motion style={style}>
-                {({ translateX, translateY, scale, boxShadow }) => (
                   <div
-                    onMouseDown={this.handleMouseDown.bind(null, [x, y])}
-                    onTouchStart={this.handleTouchStart.bind(null, [x, y])}
                     style={{
-                      borderRadius: '100%',
-                      WebkitTransform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-                      transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-                      boxShadow: `${boxShadow}px 5px 5px rgba(0,0,0,0.5)`,
-                      backgroundImage: `url(${imgUrl})`,
-                      height: '128px',
-                      width: '128px',
-                      margin: '32px',
-                      backgroundSize: 'cover'
+                      color: `${isPressed ? 'white' : 'transparent'}`,
+                      fontSize: '24px',
+                      marginTop: '80px',
+                      transition: '400ms ease 50ms'
                     }}
+                  >
+                    X
+                  </div>
+                </div>
+              </ColumnSection>
+
+              <ColumnSection>
+                <audio autoPlay className="player" preload="false">
+                  <source src={currentSong.preview_url} />
+                </audio>
+                <button onClick={this.testRequest}>TEST REQUEST</button>
+                <ArtistText artist={id} isBlur={isPressed} />
+                <div style={{ marginLeft: '-64px', marginRight: '-64px' }}>
+                  <SongText song={currentSong.name} isBlur={isPressed} />
+                  <ArtistText
+                    artist={currentSong.artists[0].name}
+                    isBlur={isPressed}
                   />
-                )}
-              </Motion>
-            </ColumnSection>
-            <ColumnSection>
-              <div
-                style={{
-                  height: '100%',
-                  width: '100%',
-                  backgroundColor: `${isPressed &&
-                  this.isAccept({ x, appWidth })
-                    ? 'green'
-                    : 'transparent'}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
+                </div>
+
+                <Motion style={style}>
+                  {({ translateX, translateY, scale, boxShadow }) => (
+                    <div
+                      onMouseDown={this.handleMouseDown.bind(null, [x, y])}
+                      onTouchStart={this.handleTouchStart.bind(null, [x, y])}
+                      style={{
+                        borderRadius: '100%',
+                        WebkitTransform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
+                        transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
+                        boxShadow: `${boxShadow}px 5px 5px rgba(0,0,0,0.5)`,
+                        backgroundImage: `url(${currentSong.album.images[0]
+                          .url})`,
+                        height: '128px',
+                        width: '128px',
+                        margin: '32px',
+                        backgroundSize: 'cover'
+                      }}
+                    />
+                  )}
+                </Motion>
+              </ColumnSection>
+              <ColumnSection>
                 <div
                   style={{
-                    color: `${isPressed ? 'white' : 'transparent'}`,
-                    fontSize: '24px',
-                    marginTop: '80px',
-                    transition: '400ms ease 50ms'
+                    height: '100%',
+                    width: '100%',
+                    backgroundColor: `${isPressed &&
+                    this.isAccept({ x, appWidth })
+                      ? 'green'
+                      : 'transparent'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
                   }}
                 >
-                  {'\u2714'}
+                  <div
+                    style={{
+                      color: `${isPressed ? 'white' : 'transparent'}`,
+                      fontSize: '24px',
+                      marginTop: '80px',
+                      transition: '400ms ease 50ms'
+                    }}
+                  >
+                    {'\u2714'}
+                  </div>
                 </div>
-              </div>
-            </ColumnSection>
-          </FlexBetween>
+              </ColumnSection>
+            </FlexBetween>
+          )}
         </div>
       </AppContainer>
     )
@@ -306,11 +369,67 @@ const FlexVerticalCenter = ({ children }) => (
     style={{
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      alignItems: 'center'
     }}
   >
     {children}
   </div>
 )
+const AlbumArtIcon = ({ imgUrl, onStart, onEnd }) => (
+  <div
+    role="presentation"
+    style={{
+      height: '128px',
+      width: '128px',
+      margin: '32px',
+      borderRadius: '100%'
+    }}
+    onMouseDown={onStart}
+    onMouseUp={onEnd}
+  />
+)
 
+const SongText = ({ song, isBlur }) => (
+  <div
+    style={{
+      color: `${isBlur ? 'transparent' : 'white'}`,
+      margin: '8px',
+      fontSize: '24px',
+      textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
+      transition: '400ms ease 50ms'
+    }}
+  >
+    {song}
+  </div>
+)
+
+const ArtistText = ({ artist, isBlur }) => (
+  <div
+    style={{
+      color: `${isBlur ? 'transparent' : 'white'}`,
+      margin: '8px',
+      fontSize: '18px',
+      textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
+      transition: '400ms ease 50ms'
+    }}
+  >
+    {artist}
+  </div>
+)
+
+const SongInput = ({ value, onChange, suggestions, onSubmit }) => (
+  <div
+    style={{
+      // color: `${isBlur ? 'transparent' : 'white'}`,
+      // margin: '8px',
+      // fontSize: '24px',
+      // textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
+      // transition: '400ms ease 50ms'
+    }}
+  >
+    <input value={value} onChange={onChange} />
+    <button onClick={onSubmit}>GO</button>
+  </div>
+)
 export default App
