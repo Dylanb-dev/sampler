@@ -192,11 +192,11 @@ class App extends Component {
     // console.log(currentSong)
     const [x, y] = mouseXY
 
-    const maxX = (appWidth - 128 * 1.2) / 2
+    const maxX = (appWidth - 134 * 1.2) / 2
     const minX = -((appWidth - 128 * 1.2) / 2)
 
     const maxY = 150
-    const minY = -300
+    const minY = -150
 
     const hasCallback = window.location.pathname.includes('callback')
 
@@ -222,7 +222,15 @@ class App extends Component {
           onAfterOpen={() => {}}
           onRequestClose={() => this.setState({ savePlaylist: false })}
           contentLabel="Modal"
-          style={{ content: { borderRadius: '32px' } }}
+          style={{
+            content: {
+              borderRadius: '32px',
+              top: '8px',
+              left: '8px',
+              right: '8px',
+              bottom: '8px'
+            }
+          }}
         >
           <FlexVerticalCenter>
             {songArray.map(console.log)}
@@ -230,6 +238,7 @@ class App extends Component {
               style={{
                 height: 'calc(100vh - 200px)',
                 marginBottom: '16px',
+                borderRadius: '32px',
                 width: '100%'
               }}
             >
@@ -321,7 +330,7 @@ class App extends Component {
                     alignItems: 'center',
                     marginLeft: '-64px',
                     marginRight: '-64px',
-                    height: '100px'
+                    height: 'calc(100vh - 400px)'
                   }}
                 >
                   <SongText song={currentSong.name} isBlur={isPressed} />
