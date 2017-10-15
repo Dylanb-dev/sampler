@@ -10,6 +10,7 @@ import {
 } from './spotify'
 import { Motion, spring } from 'react-motion'
 import { isEmpty } from 'lodash/fp'
+import Modal from 'react-modal'
 
 import './App.css'
 
@@ -28,14 +29,16 @@ class App extends Component {
     this.state = {
       id: '-----------',
       mouseXY: [0, 0],
+      savePlaylist: false,
       isPressed: false,
       mouseCircleDelta: [0, 0],
       appWidth: Math.min(420, window.innerWidth),
       spotifyUrl: getSpotifyUrl(),
       songArray: [],
       currentSong: {},
-      songSearchText: 'in the shadows tonight',
-      songSearchSuggestions: []
+      songSearchText: 'muse',
+      songSearchSuggestions: [],
+      playAudio: false
     }
     if (!window.location.pathname.includes('callback')) {
       window.location = this.state.spotifyUrl
@@ -61,8 +64,9 @@ class App extends Component {
     // eslint-disable-next-line
     window.addEventListener('mouseup', this.handleMouseUp)
 
-    getMeInformation({ type, token }).fork(console.error, res =>
-      this.setState({ id: res.id })
+    getMeInformation({ type, token }).fork(
+      () => (window.location = this.state.spotifyUrl),
+      res => this.setState({ id: res.id })
     )
   }
 
@@ -90,21 +94,14 @@ class App extends Component {
     })
   }
 
-  testRequest = () => {
-    const { type, token, id } = this.state
-    createPlaylist({ type, token })({ id, playlist: 'test1' }).fork(
-      console.error,
-      console.log
-    )
-  }
-
   searchTrack = () => {
     const { type, token, songSearchText } = this.state
     search({ type, token })(songSearchText).fork(console.error, res =>
       this.setState({
         currentSong: res.tracks.items
           .filter(o => o.preview_url)
-          .sort((a, b) => a.popularity - b.popularity)[0]
+          .sort((a, b) => a.popularity - b.popularity)[0],
+        playAudio: true
       })
     )
   }
@@ -113,6 +110,7 @@ class App extends Component {
     const { type, token, currentSong, songArray } = this.state
 
     let index = songArray
+    this.setState({ playAudio: false })
 
     return getRelatedArtist({ type, token })(currentSong.artists[0].id)
       .chain(artistRes =>
@@ -126,7 +124,8 @@ class App extends Component {
         this.setState({
           currentSong: res.tracks.items
             .filter(o => o.preview_url)
-            .sort((a, b) => a.popularity - b.popularity)[0]
+            .sort((a, b) => a.popularity - b.popularity)[0],
+          playAudio: true
         })
       )
   }
@@ -161,7 +160,16 @@ class App extends Component {
 
   handleSongTextChange = e => {
     e.preventDefault()
-    this.setState({ songSearchText: e })
+    this.setState({ songSearchText: e.target.value })
+  }
+
+  savePlaylist = () => {
+    const { type, token, songArray } = this.state
+    this.setState({ saving: true })
+    createPlaylist({ type, token })(songArray).fork(
+      console.log(error),
+      e => (window.location = e)
+    )
   }
 
   render() {
@@ -171,9 +179,11 @@ class App extends Component {
       isPressed,
       spotifyUrl,
       id,
+      playAudio,
       songSearchText,
       currentSong,
-      songArray
+      songArray,
+      savePlaylist
     } = this.state
 
     // console.log(currentSong)
@@ -200,9 +210,44 @@ class App extends Component {
           scale: spring(1.0, springSetting1),
           boxShadow: spring((x - (3 * width - 50) / 2) / 15, springSetting1)
         }
+    console.log(songSearchText)
 
     return (
       <AppContainer>
+        <Modal
+          isOpen={savePlaylist}
+          onAfterOpen={() => {}}
+          onRequestClose={() => this.setState({ savePlaylist: false })}
+          contentLabel="Modal"
+        >
+          <FlexVerticalCenter>
+            {songArray.map(console.log)}
+
+            {songArray.map(o => (
+              <div
+                key={o.id}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  margin: '4px',
+                  borderRadius: '4px',
+                  backgroundColor: 'green',
+                  color: 'white'
+                }}
+              >
+                <p>{`Artist: ${o.artists.map(o => o.name)}`}</p>{' '}
+                <p>{`Name: ${o.name}`}</p>
+                <p>{`Album: ${o.album.name}`}</p>
+              </div>
+            ))}
+            <Flex>
+              <button onClick={this.savePlaylist}>Save</button>
+              <button onClick={() => this.setState({ savePlaylist: false })}>
+                Back
+              </button>
+            </Flex>
+          </FlexVerticalCenter>
+        </Modal>
         <div style={{ width: '100%', maxWidth: '420px' }}>
           {isEmpty(currentSong) ? (
             <FlexVerticalCenter>
@@ -248,12 +293,23 @@ class App extends Component {
               </ColumnSection>
 
               <ColumnSection>
-                <audio autoPlay className="player" preload="false">
-                  <source src={currentSong.preview_url} />
-                </audio>
-                <button onClick={this.testRequest}>TEST REQUEST</button>
+                {playAudio && (
+                  <audio autoPlay className="player" preload="false">
+                    <source src={currentSong.preview_url} />
+                  </audio>
+                )}
                 <ArtistText artist={id} isBlur={isPressed} />
-                <div style={{ marginLeft: '-64px', marginRight: '-64px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginLeft: '-64px',
+                    marginRight: '-64px',
+                    height: '100px'
+                  }}
+                >
                   <SongText song={currentSong.name} isBlur={isPressed} />
                   <ArtistText
                     artist={currentSong.artists[0].name}
@@ -281,6 +337,15 @@ class App extends Component {
                     />
                   )}
                 </Motion>
+                <button
+                  onClick={() =>
+                    this.setState({ currentSong: {}, songArray: [] })}
+                >
+                  Back (Will clear the playlist)
+                </button>
+                <button onClick={() => this.setState({ savePlaylist: true })}>
+                  Save Playlist
+                </button>
               </ColumnSection>
               <ColumnSection>
                 <div
@@ -371,6 +436,16 @@ const FlexVerticalCenter = ({ children }) => (
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center'
+    }}
+  >
+    {children}
+  </div>
+)
+
+const Flex = ({ children }) => (
+  <div
+    style={{
+      display: 'flex'
     }}
   >
     {children}
