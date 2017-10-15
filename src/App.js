@@ -10,7 +10,7 @@ import {
   getRelatedArtist
 } from './spotify'
 import { Motion, spring } from 'react-motion'
-import { isEmpty } from 'lodash/fp'
+import { isEmpty, isEqual } from 'lodash/fp'
 import Modal from 'react-modal'
 
 import './App.css'
@@ -112,7 +112,7 @@ class App extends Component {
   playNextSong = () => {
     const { type, token, currentSong, songArray } = this.state
 
-    let index = songArray
+    let index = songArray.length - 1
     this.setState({ playAudio: false })
 
     return getRelatedArtist({ type, token })(currentSong.artists[0].id)
@@ -127,6 +127,7 @@ class App extends Component {
         this.setState({
           currentSong: res.tracks.items
             .filter(o => o.preview_url)
+            .filter(o => !isEqual(o, songArray[index]))
             .sort((a, b) => a.popularity - b.popularity)[0],
           playAudio: true
         })
@@ -167,11 +168,11 @@ class App extends Component {
   }
 
   savePlaylist = () => {
-    const { type, token, songArray } = this.state
+    const { type, token, id, songArray } = this.state
     this.setState({ saving: true })
-    createPlaylist({ type, token })(songArray).fork(
-      console.log(error),
-      e => (window.location = e)
+    createPlaylist({ type, token })({ id, playlist: 'Sampler' }).fork(
+      console.error,
+      console.log
     )
   }
 
@@ -213,8 +214,6 @@ class App extends Component {
           scale: spring(1.0, springSetting1),
           boxShadow: spring((x - (3 * width - 50) / 2) / 15, springSetting1)
         }
-    console.log(songSearchText)
-
     return (
       <AppContainer>
         <Modal
@@ -236,7 +235,7 @@ class App extends Component {
             {songArray.map(console.log)}
             <ScrollView
               style={{
-                height: 'calc(100vh - 200px)',
+                height: 'calc(100vh - 136px)',
                 marginBottom: '16px',
                 borderRadius: '32px',
                 width: '100%'
@@ -246,8 +245,8 @@ class App extends Component {
                 <div
                   key={o.id}
                   style={{
-                    width: 'calc(100% - 20px)',
-                    padding: '8px',
+                    width: 'calc(100% - 36px)',
+                    padding: '8px 16px',
                     margin: '4px',
                     borderRadius: '32px',
                     backgroundColor: 'green',
@@ -272,7 +271,7 @@ class App extends Component {
           </FlexVerticalCenter>
         </Modal>
         <div style={{ width: '100%', maxWidth: '420px' }}>
-          {isEmpty(currentSong) ? (
+          {isEmpty(currentSong) && songArray.length === 0 ? (
             <FlexVerticalCenter>
               <SongText song={`Hello, ${id}`} isBlur={false} />
               <ArtistText

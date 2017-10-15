@@ -1,6 +1,7 @@
 {
   "name": "sampler",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "homepage": "https://lolcookie.github.io/sampler",
   "private": true,
   "dependencies": {
     "fluture": "^7.1.3",
@@ -18,7 +19,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "npm run build&&gh-pages -d build"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.1",
@@ -32,6 +34,7 @@
     "eslint-plugin-jsx-a11y": "^5.1.1",
     "eslint-plugin-lodash-fp": "^2.1.3",
     "eslint-plugin-react": "^7.4.0",
+    "gh-pages": "^1.0.0",
     "jsdom-quokka-plugin": "^1.0.6"
   }
 }
