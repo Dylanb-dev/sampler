@@ -1,6 +1,7 @@
 /* eslint-disable */
 
 import React, { Component } from 'react'
+import { ScrollView } from 'react-native-web'
 import {
   getSpotifyUrl,
   getMeInformation,
@@ -64,10 +65,12 @@ class App extends Component {
     // eslint-disable-next-line
     window.addEventListener('mouseup', this.handleMouseUp)
 
-    getMeInformation({ type, token }).fork(
-      () => (window.location = this.state.spotifyUrl),
-      res => this.setState({ id: res.id })
-    )
+    getMeInformation({ type, token }).fork(console.error, res => {
+      if (res.error) {
+        return (window.location = this.state.spotifyUrl)
+      }
+      this.setState({ id: res.id })
+    })
   }
 
   handleTouchStart = (pressLocation, e) =>
@@ -219,33 +222,44 @@ class App extends Component {
           onAfterOpen={() => {}}
           onRequestClose={() => this.setState({ savePlaylist: false })}
           contentLabel="Modal"
+          style={{ content: { borderRadius: '32px' } }}
         >
           <FlexVerticalCenter>
             {songArray.map(console.log)}
-
-            {songArray.map(o => (
-              <div
-                key={o.id}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  margin: '4px',
-                  borderRadius: '4px',
-                  backgroundColor: 'green',
-                  color: 'white'
-                }}
-              >
-                <p>{`Artist: ${o.artists.map(o => o.name)}`}</p>{' '}
-                <p>{`Name: ${o.name}`}</p>
-                <p>{`Album: ${o.album.name}`}</p>
-              </div>
-            ))}
-            <Flex>
-              <button onClick={this.savePlaylist}>Save</button>
-              <button onClick={() => this.setState({ savePlaylist: false })}>
-                Back
-              </button>
-            </Flex>
+            <ScrollView
+              style={{
+                height: 'calc(100vh - 200px)',
+                marginBottom: '16px',
+                width: '100%'
+              }}
+            >
+              {songArray.map(o => (
+                <div
+                  key={o.id}
+                  style={{
+                    width: 'calc(100% - 20px)',
+                    padding: '8px',
+                    margin: '4px',
+                    borderRadius: '32px',
+                    backgroundColor: 'green',
+                    color: 'white'
+                  }}
+                >
+                  <p>{`${o.artists.map(o => o.name)}`}</p> <p>{`${o.name}`}</p>
+                  <p>{`${o.album.name}`}</p>
+                </div>
+              ))}
+            </ScrollView>
+            <div style={{ width: '192px' }}>
+              <Flex>
+                <Button
+                  onClick={() => this.setState({ savePlaylist: false })}
+                  secondary
+                  text={'Back'}
+                />
+                <Button onClick={this.savePlaylist} text={'Save'} />
+              </Flex>
+            </div>
           </FlexVerticalCenter>
         </Modal>
         <div style={{ width: '100%', maxWidth: '420px' }}>
@@ -283,7 +297,7 @@ class App extends Component {
                     style={{
                       color: `${isPressed ? 'white' : 'transparent'}`,
                       fontSize: '24px',
-                      marginTop: '80px',
+                      marginTop: '22px',
                       transition: '400ms ease 50ms'
                     }}
                   >
@@ -337,15 +351,32 @@ class App extends Component {
                     />
                   )}
                 </Motion>
-                <button
-                  onClick={() =>
-                    this.setState({ currentSong: {}, songArray: [] })}
+                <ArtistText artist={'^^ Touch album ^^'} isBlur={isPressed} />
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'space-around',
+                    alignItems: 'center',
+                    marginLeft: '-64px',
+                    marginRight: '-64px',
+                    height: '100px'
+                  }}
                 >
-                  Back (Will clear the playlist)
-                </button>
-                <button onClick={() => this.setState({ savePlaylist: true })}>
-                  Save Playlist
-                </button>
+                  <Button
+                    onClick={() =>
+                      this.setState({ currentSong: {}, songArray: [] })}
+                    secondary
+                    text={'Back'}
+                    isBlur={isPressed}
+                  />
+
+                  <Button
+                    onClick={() => this.setState({ savePlaylist: true })}
+                    text={'Save'}
+                    isBlur={isPressed}
+                  />
+                </div>
               </ColumnSection>
               <ColumnSection>
                 <div
@@ -366,7 +397,7 @@ class App extends Component {
                     style={{
                       color: `${isPressed ? 'white' : 'transparent'}`,
                       fontSize: '24px',
-                      marginTop: '80px',
+                      marginTop: '22px',
                       transition: '400ms ease 50ms'
                     }}
                   >
@@ -445,7 +476,8 @@ const FlexVerticalCenter = ({ children }) => (
 const Flex = ({ children }) => (
   <div
     style={{
-      display: 'flex'
+      display: 'flex',
+      justifyContent: 'space-around'
     }}
   >
     {children}
@@ -503,8 +535,44 @@ const SongInput = ({ value, onChange, suggestions, onSubmit }) => (
       // transition: '400ms ease 50ms'
     }}
   >
-    <input value={value} onChange={onChange} />
-    <button onClick={onSubmit}>GO</button>
+    <FlexVerticalCenter>
+      <input
+        style={{
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '32px',
+          border: 'none',
+          margin: '16px',
+          boxShadow: '0px 8px 15px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.3s ease 0s'
+        }}
+        value={value}
+        onChange={onChange}
+      />
+      <Button onClick={onSubmit} text={'Play Song'} />
+    </FlexVerticalCenter>
   </div>
+)
+
+const Button = ({ text, onClick, secondary, isBlur }) => (
+  <button
+    onClick={onClick}
+    style={{
+      fontSize: '16px',
+      padding: '16px',
+      color: isBlur ? 'transparent' : secondary ? 'black' : 'white',
+      textShadow: `0 0 ${isBlur ? '8px' : '0'} ${secondary
+        ? 'rgba(0,0,0,0.5)'
+        : 'rgba(255,255,255,0.5)'}`,
+      borderRadius: '32px',
+      border: isBlur ? 'none' : '1px solid green',
+      background: isBlur
+        ? secondary ? 'rgba(255,255,255,0.1)' : 'rgba(0,128,0,0.1)'
+        : secondary ? 'white' : 'green',
+      boxShadow: isBlur ? 'none' : '0px 8px 15px rgba(0, 0, 0, 0.1)',
+      transition: 'all 0.3s ease 0s'
+    }}
+    children={text}
+  />
 )
 export default App

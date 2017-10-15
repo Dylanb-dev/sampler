@@ -9,6 +9,7 @@
     "react-dom": "^16.0.0",
     "react-modal": "^3.0.3",
     "react-motion": "^0.5.2",
+    "react-native-web": "^0.1.9",
     "react-scripts": "1.0.14",
     "recompose": "^0.25.1",
     "spotify-web-api-js": "^0.22.1"
