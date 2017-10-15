@@ -1,0 +1,22 @@
+{
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "node": true,
+    "jest": true,
+    "es6": true
+  },
+  "extends": ["airbnb", "cleanjs", "plugin:lodash-fp/recommended", "prettier"],
+  "plugins": ["lodash-fp"],
+  "rules": {
+    "strict": 2,
+    "semi": [2, "never"],
+    "quotes": [2, "single", "avoid-escape"],
+    "comma-dangle": ["error", "never"],
+    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+    "import/prefer-default-export": "off",
+    "no-bitwise": "off",
+    "react/prop-types": "off",
+    "react/prefer-stateless-function": "off"
+  }
+}
