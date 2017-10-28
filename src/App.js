@@ -7,11 +7,15 @@ import {
   getMeInformation,
   createPlaylist,
   search,
-  getRelatedArtist
+  getPubPermissionsUrl,
+  getRelatedArtist,
+  addTracksToPlaylist
 } from './spotify'
 import { Motion, spring } from 'react-motion'
 import { isEmpty, isEqual } from 'lodash/fp'
 import Modal from 'react-modal'
+import MDSpinner from 'react-md-spinner'
+import format from 'date-fns/format'
 
 import './App.css'
 
@@ -35,22 +39,56 @@ class App extends Component {
       mouseCircleDelta: [0, 0],
       appWidth: Math.min(420, window.innerWidth),
       spotifyUrl: getSpotifyUrl(),
+      publicUrl: getPubPermissionsUrl(),
       songArray: [],
       currentSong: {},
       songSearchText: 'muse',
       songSearchSuggestions: [],
+      playlistName: `Sampler ${format(new Date(), 'MM/DD/YYYY')}`,
       playAudio: false
     }
-    if (!window.location.pathname.includes('callback')) {
-      window.location = this.state.spotifyUrl
-    } else {
-      const hash = window.location.hash
-      const splithash = hash => hash.split('=')
+    const hash = window.location.hash
+    const splithash = hash => hash.split('=')
 
+    if (window.location.pathname.includes('callback')) {
+      window.localStorage.setItem('token', splithash(hash)[1])
       this.state = Object.assign({}, this.state, {
         token: splithash(hash)[1],
         type: splithash(hash)[2].split('&')[0]
       })
+    } else if (window.location.pathname.includes('save')) {
+      this.state.saving = true
+
+      const id = window.localStorage.getItem('id')
+      const token = window.localStorage.getItem('token')
+
+      const songArray = JSON.parse(window.localStorage.getItem('songArray'))
+      const songUris = songArray.map(o => o.uri)
+
+      const playlistName = window.localStorage.getItem('playlistName')
+
+      createPlaylist({ type: 'Bearer', token })({
+        id,
+        playlist: playlistName
+      })
+        .chain(res =>
+          addTracksToPlaylist({ type: 'Bearer', token })({
+            id,
+            playlistId: res.id,
+            tracksUriArray: songUris
+          })
+        )
+        .fork(console.error, () => (window.location = '/'))
+    } else {
+      const token = window.localStorage.getItem('token')
+      if (token.length > 0) {
+        this.state = Object.assign({}, this.state, {
+          token: token,
+          type: 'Bearer'
+        })
+      } else {
+        window.location = this.state.spotifyUrl
+      }
     }
   }
 
@@ -65,12 +103,17 @@ class App extends Component {
     // eslint-disable-next-line
     window.addEventListener('mouseup', this.handleMouseUp)
 
-    getMeInformation({ type, token }).fork(console.error, res => {
-      if (res.error) {
-        return (window.location = this.state.spotifyUrl)
-      }
-      this.setState({ id: res.id })
-    })
+    if (window.location.pathname.includes('save')) {
+      // window.location = '/'
+    } else {
+      getMeInformation({ type, token }).fork(console.error, res => {
+        if (res.error) {
+          return (window.location = this.state.spotifyUrl)
+        }
+        window.localStorage.setItem('id', res.id)
+        this.setState({ id: res.id })
+      })
+    }
   }
 
   handleTouchStart = (pressLocation, e) =>
@@ -168,12 +211,11 @@ class App extends Component {
   }
 
   savePlaylist = () => {
-    const { type, token, id, songArray } = this.state
+    const { type, token, id, songArray, publicUrl, playlistName } = this.state
     this.setState({ saving: true })
-    createPlaylist({ type, token })({ id, playlist: 'Sampler' }).fork(
-      console.error,
-      console.log
-    )
+    window.localStorage.setItem('playlistName', playlistName)
+    window.localStorage.setItem('songArray', JSON.stringify(songArray))
+    window.location = publicUrl
   }
 
   render() {
@@ -187,9 +229,11 @@ class App extends Component {
       songSearchText,
       currentSong,
       songArray,
-      savePlaylist
+      saving,
+      savePlaylist,
+      playlistName
     } = this.state
-
+    console.log(this.state.publicUrl)
     // console.log(currentSong)
     const [x, y] = mouseXY
 
@@ -199,7 +243,7 @@ class App extends Component {
     const maxY = 150
     const minY = -150
 
-    const hasCallback = window.location.pathname.includes('callback')
+    const hasCallback = window.location.hash.length > 0
 
     const style = isPressed
       ? {
@@ -220,9 +264,10 @@ class App extends Component {
           isOpen={savePlaylist}
           onAfterOpen={() => {}}
           onRequestClose={() => this.setState({ savePlaylist: false })}
-          contentLabel="Modal"
+          contentLabel="SavePlaylistModal"
           style={{
             content: {
+              background: 'rgb(57, 57, 57)',
               borderRadius: '32px',
               top: '8px',
               left: '8px',
@@ -258,6 +303,10 @@ class App extends Component {
                 </div>
               ))}
             </ScrollView>
+            <TextInput
+              onChange={e => this.setState({ playlistName: e })}
+              value={playlistName}
+            />
             <div style={{ width: '192px' }}>
               <Flex>
                 <Button
@@ -270,6 +319,27 @@ class App extends Component {
             </div>
           </FlexVerticalCenter>
         </Modal>
+        <Modal
+          isOpen={saving}
+          onAfterOpen={() => {}}
+          onRequestClose={() => {}}
+          contentLabel="SavingModal"
+          style={{
+            content: {
+              background: 'rgb(57, 57, 57)',
+              borderRadius: '32px',
+              top: '8px',
+              left: '8px',
+              right: '8px',
+              bottom: '8px'
+            }
+          }}
+        >
+          <FlexVerticalCenter>
+            <MDSpinner singleColor="green" />
+            <ArtistText artist={'Saving your playlist...'} isBlur={false} />
+          </FlexVerticalCenter>
+        </Modal>
         <div style={{ width: '100%', maxWidth: '420px' }}>
           {isEmpty(currentSong) && songArray.length === 0 ? (
             <FlexVerticalCenter>
@@ -278,11 +348,11 @@ class App extends Component {
                 artist={'Please enter a song to get started'}
                 isBlur={false}
               />
-              <SongInput
-                onSubmit={this.searchTrack}
+              <TextInput
                 onChange={this.handleSongTextChange}
                 value={songSearchText}
               />
+              <Button onClick={this.searchTrack} text={'Search'} />
             </FlexVerticalCenter>
           ) : (
             <FlexBetween>
@@ -474,7 +544,8 @@ const FlexVerticalCenter = ({ children }) => (
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
-      alignItems: 'center'
+      alignItems: 'center',
+      height: '100%'
     }}
   >
     {children}
@@ -533,33 +604,22 @@ const ArtistText = ({ artist, isBlur }) => (
   </div>
 )
 
-const SongInput = ({ value, onChange, suggestions, onSubmit }) => (
-  <div
+const TextInput = ({ value, onChange, suggestions }) => (
+  <input
     style={{
-      // color: `${isBlur ? 'transparent' : 'white'}`,
-      // margin: '8px',
-      // fontSize: '24px',
-      // textShadow: `0 0 ${isBlur ? '8px' : '0'} rgba(255,255,255,0.5)`,
-      // transition: '400ms ease 50ms'
+      margin: '16px',
+      padding: '16px',
+      fontSize: '16px',
+      borderRadius: '32px',
+      border: 'none',
+      margin: '16px',
+      boxShadow: '0px 8px 15px rgba(0, 0, 0, 0.1)',
+      transition: 'all 0.3s ease 0s',
+      width: 'calc(100% - 64px)'
     }}
-  >
-    <FlexVerticalCenter>
-      <input
-        style={{
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '32px',
-          border: 'none',
-          margin: '16px',
-          boxShadow: '0px 8px 15px rgba(0, 0, 0, 0.1)',
-          transition: 'all 0.3s ease 0s'
-        }}
-        value={value}
-        onChange={onChange}
-      />
-      <Button onClick={onSubmit} text={'Play Song'} />
-    </FlexVerticalCenter>
-  </div>
+    value={value}
+    onChange={onChange}
+  />
 )
 
 const Button = ({ text, onClick, secondary, isBlur }) => (
@@ -568,6 +628,7 @@ const Button = ({ text, onClick, secondary, isBlur }) => (
     style={{
       fontSize: '16px',
       padding: '16px',
+      textTransform: 'upperCase',
       color: isBlur ? 'transparent' : secondary ? 'black' : 'white',
       textShadow: `0 0 ${isBlur ? '8px' : '0'} ${secondary
         ? 'rgba(0,0,0,0.5)'

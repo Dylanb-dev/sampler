@@ -4,10 +4,12 @@
   "homepage": "https://lolcookie.github.io/sampler",
   "private": true,
   "dependencies": {
+    "date-fns": "^1.29.0",
     "fluture": "^7.1.3",
     "isomorphic-fetch": "^2.2.1",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
+    "react-md-spinner": "^0.2.5",
     "react-modal": "^3.0.3",
     "react-motion": "^0.5.2",
     "react-native-web": "^0.1.9",
@@ -20,10 +22,13 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "deploy": "npm run build&&gh-pages -d build"
+    "deploy": "npm run build&&gh-pages -d build",
+    "tp": "babel ./node_modules/fluture --presets babel-preset-es2015 --out-dir fluture"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-eslint": "^8.0.1",
+    "babel-preset-es2015": "^6.24.1",
     "eslint": "^4.8.0",
     "eslint-config-airbnb": "^15.1.0",
     "eslint-config-cleanjs": "^4.0.0",
@@ -35,6 +40,7 @@
     "eslint-plugin-lodash-fp": "^2.1.3",
     "eslint-plugin-react": "^7.4.0",
     "gh-pages": "^1.0.0",
-    "jsdom-quokka-plugin": "^1.0.6"
+    "jsdom-quokka-plugin": "^1.0.6",
+    "serverless-single-page-app-plugin": "file:./serverless-single-page-app-plugin"
   }
 }
