@@ -142,14 +142,16 @@ class App extends Component {
 
   searchTrack = () => {
     const { type, token, songSearchText } = this.state
-    search({ type, token })(songSearchText).fork(console.error, res =>
-      this.setState({
-        currentSong: res.tracks.items
-          .filter(o => o.preview_url)
-          .sort((a, b) => a.popularity - b.popularity)[0],
-        playAudio: true
-      })
-    )
+    if (songSearchText.length > 0) {
+      search({ type, token })(songSearchText).fork(console.error, res =>
+        this.setState({
+          currentSong: res.tracks.items
+            .filter(o => o.preview_url)
+            .sort((a, b) => a.popularity - b.popularity)[0],
+          playAudio: true
+        })
+      )
+    }
   }
 
   playNextSong = () => {
@@ -210,12 +212,19 @@ class App extends Component {
     this.setState({ songSearchText: e.target.value })
   }
 
+  handlePlaylistTextChange = e => {
+    e.preventDefault()
+    this.setState({ playlistName: e.target.value })
+  }
+
   savePlaylist = () => {
     const { type, token, id, songArray, publicUrl, playlistName } = this.state
-    this.setState({ saving: true })
-    window.localStorage.setItem('playlistName', playlistName)
-    window.localStorage.setItem('songArray', JSON.stringify(songArray))
-    window.location = publicUrl
+    if (playlistName.length > 0) {
+      this.setState({ saving: true })
+      window.localStorage.setItem('playlistName', playlistName)
+      window.localStorage.setItem('songArray', JSON.stringify(songArray))
+      window.location = publicUrl
+    }
   }
 
   render() {
@@ -304,7 +313,7 @@ class App extends Component {
               ))}
             </ScrollView>
             <TextInput
-              onChange={e => this.setState({ playlistName: e })}
+              onChange={this.handlePlaylistTextChange}
               value={playlistName}
             />
             <div style={{ width: '192px' }}>
