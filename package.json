@@ -1,7 +1,6 @@
 {
-  "name": "sampler",
+  "name": "spotifysampler",
   "version": "0.2.0",
-  "homepage": "https://lolcookie.github.io/sampler",
   "private": true,
   "dependencies": {
     "date-fns": "^1.29.0",

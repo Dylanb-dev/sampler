@@ -7,7 +7,6 @@ import {
   getMeInformation,
   createPlaylist,
   search,
-  getPubPermissionsUrl,
   getRelatedArtist,
   addTracksToPlaylist
 } from './spotify'
@@ -39,7 +38,6 @@ class App extends Component {
       mouseCircleDelta: [0, 0],
       appWidth: Math.min(420, window.innerWidth),
       spotifyUrl: getSpotifyUrl(),
-      publicUrl: getPubPermissionsUrl(),
       songArray: [],
       currentSong: {},
       songSearchText: 'muse',
@@ -64,7 +62,6 @@ class App extends Component {
 
       const songArray = JSON.parse(window.localStorage.getItem('songArray'))
       const songUris = songArray.map(o => o.uri)
-
       const playlistName = window.localStorage.getItem('playlistName')
 
       createPlaylist({ type: 'Bearer', token })({
@@ -81,7 +78,7 @@ class App extends Component {
         .fork(console.error, () => (window.location = '/'))
     } else {
       const token = window.localStorage.getItem('token')
-      if (token.length > 0) {
+      if (token && token.length > 0) {
         this.state = Object.assign({}, this.state, {
           token: token,
           type: 'Bearer'
@@ -191,13 +188,11 @@ class App extends Component {
     const [x, y] = mouseXY
 
     if (this.isAccept({ x, appWidth })) {
-      console.log('accept')
       this.setState({ songArray: [...songArray, currentSong] })
       this.resetAlbumPostion()
       return this.playNextSong()
     }
     if (this.isDecline({ x, appWidth })) {
-      console.log('refuse')
       this.resetAlbumPostion()
       return this.playNextSong()
     }
@@ -218,12 +213,12 @@ class App extends Component {
   }
 
   savePlaylist = () => {
-    const { type, token, id, songArray, publicUrl, playlistName } = this.state
+    const { type, token, id, songArray, playlistName } = this.state
     if (playlistName.length > 0) {
       this.setState({ saving: true })
       window.localStorage.setItem('playlistName', playlistName)
       window.localStorage.setItem('songArray', JSON.stringify(songArray))
-      window.location = publicUrl
+      window.location = '/save'
     }
   }
 
@@ -242,8 +237,6 @@ class App extends Component {
       savePlaylist,
       playlistName
     } = this.state
-    console.log(this.state.publicUrl)
-    // console.log(currentSong)
     const [x, y] = mouseXY
 
     const maxX = (appWidth - 134 * 1.2) / 2
@@ -286,7 +279,6 @@ class App extends Component {
           }}
         >
           <FlexVerticalCenter>
-            {songArray.map(console.log)}
             <ScrollView
               style={{
                 height: 'calc(100vh - 136px)',

@@ -6,7 +6,7 @@ plugins:
   - serverless-single-page-app-plugin
 
 custom:
-  s3Bucket: sampler.app
+  s3Bucket: spotifysampler
 
 provider:
   name: aws

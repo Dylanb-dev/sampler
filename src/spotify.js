@@ -6,7 +6,7 @@ let REDIRECT_URI
 
 if (process.env.NODE_ENV === 'production') {
   CLIENT_ID = '19f34a5a747e4fc2808bb6a082a9fa53'
-  REDIRECT_URI = 'https://lolcookie.github.io/sampler'
+  REDIRECT_URI = 'https://d27li4hngmqekl.cloudfront.net'
 } else {
   CLIENT_ID = '9676bf75d6304a6da92f201566ac377d'
   REDIRECT_URI = 'http://localhost:3000'
@@ -22,24 +22,11 @@ export const queryParams = params =>
     .join('&')
 
 export const getSpotifyUrl = (
-  { client_id, response_type, redirect_uri } = {
+  { client_id, scope, response_type, redirect_uri } = {
     client_id: CLIENT_ID,
     response_type: 'token',
-    redirect_uri: `${REDIRECT_URI}/callback`
-  }
-) =>
-  `https://accounts.spotify.com/authorize?${queryParams({
-    client_id,
-    response_type,
-    redirect_uri
-  })}`
-
-export const getPubPermissionsUrl = (
-  { client_id, scope, redirect_uri, response_type } = {
-    client_id: CLIENT_ID,
     scope: 'playlist-modify-public',
-    response_type: 'code',
-    redirect_uri: `${REDIRECT_URI}/save`
+    redirect_uri: `${REDIRECT_URI}/callback`
   }
 ) =>
   `https://accounts.spotify.com/authorize?${queryParams({
