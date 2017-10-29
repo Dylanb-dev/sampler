@@ -1,16 +1,6 @@
 import { encaseP2, tryP } from 'fluture/index'
 import fetch from 'isomorphic-fetch'
-
-let CLIENT_ID
-let REDIRECT_URI
-
-if (process.env.NODE_ENV === 'production') {
-  CLIENT_ID = '19f34a5a747e4fc2808bb6a082a9fa53'
-  REDIRECT_URI = 'https://d27li4hngmqekl.cloudfront.net'
-} else {
-  CLIENT_ID = '9676bf75d6304a6da92f201566ac377d'
-  REDIRECT_URI = 'http://localhost:3000'
-}
+import { CLIENT_ID, REDIRECT_URI } from './config'
 
 const fetchf = encaseP2(fetch)
 

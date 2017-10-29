@@ -9,7 +9,7 @@ import {
   search,
   getRelatedArtist,
   addTracksToPlaylist
-} from './spotify'
+} from './api'
 import { Motion, spring } from 'react-motion'
 import { isEmpty, isEqual } from 'lodash/fp'
 import Modal from 'react-modal'
