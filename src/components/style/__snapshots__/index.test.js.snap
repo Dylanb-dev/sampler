@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AppContainer renders correctly 1`] = `
+<div
+  style={
+    Object {
+      "alignItems": "center",
+      "background": "linear-gradient(#146E14,#181818)",
+      "display": "flex",
+      "flexDirection": "column",
+      "height": "100%",
+      "justifyContent": "center",
+      "maxHeight": "100vh",
+      "maxWidth": "100vw",
+      "minHeight": "100vh",
+      "minWidth": "100vw",
+    }
+  }
+>
+  <div />
+  <div />
+</div>
+`;
+
+exports[`ColumnSection renders correctly 1`] = `
+<div
+  style={
+    Object {
+      "alignItems": "center",
+      "display": "flex",
+      "flexDirection": "column",
+      "height": "100%",
+      "justifyContent": "center",
+      "width": "100%",
+    }
+  }
+>
+  <div />
+  <div />
+</div>
+`;
+
+exports[`Flex renders correctly 1`] = `
+<div
+  style={
+    Object {
+      "display": "flex",
+      "justifyContent": "space-around",
+      "width": "100%",
+    }
+  }
+>
+  <div />
+  <div />
+</div>
+`;
+
+exports[`FlexBetween renders correctly 1`] = `
+<div
+  style={
+    Object {
+      "display": "flex",
+      "height": "100vh",
+      "justifyContent": "space-between",
+      "width": "100%",
+    }
+  }
+>
+  <div />
+  <div />
+</div>
+`;
+
+exports[`FlexVerticalCenter renders correctly 1`] = `
+<div
+  style={
+    Object {
+      "alignItems": "center",
+      "display": "flex",
+      "flexDirection": "column",
+      "height": "100%",
+      "justifyContent": "center",
+    }
+  }
+>
+  <div />
+  <div />
+</div>
+`;

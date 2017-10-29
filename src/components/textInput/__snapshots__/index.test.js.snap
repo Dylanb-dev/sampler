@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TextInput renders correctly 1`] = `
+<input
+  onChange={[Function]}
+  style={
+    Object {
+      "border": "none",
+      "borderRadius": "32px",
+      "boxShadow": "0px 8px 15px rgba(0, 0, 0, 0.1)",
+      "fontSize": "16px",
+      "margin": "16px",
+      "padding": "16px",
+      "transition": "all 0.3s ease 0s",
+      "width": "calc(100% - 64px)",
+    }
+  }
+  value=""
+/>
+`;
