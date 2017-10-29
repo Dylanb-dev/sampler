@@ -299,8 +299,10 @@ class App extends Component {
                     color: 'white'
                   }}
                 >
-                  <p>{`${o.artists.map(o => o.name)}`}</p> <p>{`${o.name}`}</p>
-                  <p>{`${o.album.name}`}</p>
+                  <p>{`${o.name}`}</p>
+                  <p style={{ fontSize: '12px' }}>{`${o.artists.map(
+                    o => o.name
+                  )}`}</p>
                 </div>
               ))}
             </ScrollView>
