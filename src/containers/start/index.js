@@ -11,9 +11,8 @@ const StartPure = () => (
   <AppContainer>
     <div style={{ width: '100%', maxWidth: '420px' }}>
       <FlexVerticalCenter>
-        <Text size="large" text={'Sampler App'} />
-        <Text size="medium" text={'Getting ready...'} />
         <MDSpinner singleColor="white" />
+        <Text size="medium" text={'Getting ready...'} />
       </FlexVerticalCenter>
     </div>
   </AppContainer>

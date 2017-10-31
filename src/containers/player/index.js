@@ -1,6 +1,9 @@
 /* eslint-disable */
 
 import React, { Component } from 'react'
+import format from 'date-fns/format'
+import PropTypes from 'prop-types'
+
 import {
   getSpotifyUrl,
   getMeInformation,
@@ -10,16 +13,6 @@ import {
   addTracksToPlaylist
 } from 'api'
 import { Motion, spring } from 'react-motion'
-
-import format from 'date-fns/format'
-
-import {
-  lifecycle,
-  compose,
-  pure,
-  withStateHandlers,
-  defaultProps
-} from 'recompose'
 
 import {
   FlexBetween,
