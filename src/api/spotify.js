@@ -1,10 +1,9 @@
 import { encaseP2, tryP } from 'fluture/index'
 import fetch from 'isomorphic-fetch'
-import { CLIENT_ID, REDIRECT_URI } from './config'
+
+import { CLIENT_ID, REDIRECT_URI, AUTH_TYPE } from './config'
 
 const fetchf = encaseP2(fetch)
-
-// User must be prompted to save data to a play list
 
 export const queryParams = params =>
   Object.keys(params)
@@ -26,15 +25,15 @@ export const getSpotifyUrl = (
     redirect_uri
   })}`
 
-export const getMeInformation = ({ type, token }) =>
+export const getMeInformation = token =>
   fetchf('https://api.spotify.com/v1/me', {
     method: 'GET',
     headers: {
-      Authorization: `${type} ${token}`
+      Authorization: `${AUTH_TYPE} ${token}`
     }
   }).chain(res => tryP(() => res.json()))
 
-export const createPlaylist = ({ type, token }) => ({ id, playlist }) =>
+export const createPlaylist = token => ({ id, playlist }) =>
   fetchf(`https://api.spotify.com/v1/users/${id}/playlists`, {
     method: 'POST',
     'Content-Type': 'application/json',
@@ -43,11 +42,11 @@ export const createPlaylist = ({ type, token }) => ({ id, playlist }) =>
       description: 'Created from sampler app'
     }),
     headers: {
-      Authorization: `${type} ${token}`
+      Authorization: `${AUTH_TYPE} ${token}`
     }
   }).chain(res => tryP(() => res.json()))
 
-export const addTracksToPlaylist = ({ type, token }) => ({
+export const addTracksToPlaylist = token => ({
   id,
   playlistId,
   tracksUriArray
@@ -61,12 +60,12 @@ export const addTracksToPlaylist = ({ type, token }) => ({
         uris: tracksUriArray
       }),
       headers: {
-        Authorization: `${type} ${token}`
+        Authorization: `${AUTH_TYPE} ${token}`
       }
     }
   ).chain(res => tryP(() => res.json()))
 
-export const search = ({ type, token }) => trackName =>
+export const search = token => trackName =>
   fetchf(
     `https://api.spotify.com/v1/search?${queryParams({
       q: trackName,
@@ -75,15 +74,15 @@ export const search = ({ type, token }) => trackName =>
     {
       method: 'GET',
       headers: {
-        Authorization: `${type} ${token}`
+        Authorization: `${AUTH_TYPE} ${token}`
       }
     }
   ).chain(res => tryP(() => res.json()))
 
-export const getRelatedArtist = ({ type, token }) => id =>
+export const getRelatedArtist = token => id =>
   fetchf(`https://api.spotify.com/v1/artists/${id}/related-artists`, {
     method: 'GET',
     headers: {
-      Authorization: `${type} ${token}`
+      Authorization: `${AUTH_TYPE} ${token}`
     }
   }).chain(res => tryP(() => res.json()))

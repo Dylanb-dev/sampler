@@ -1,13 +1,9 @@
-/* eslint-disable import/no-extraneous-dependencies */
-
 import React from 'react'
 import PropTypes from 'prop-types'
 import { pure, compose } from 'recompose'
-
 import { ScrollView } from 'react-native-web'
 import Modal from 'react-modal'
 import MDSpinner from 'react-md-spinner'
-
 import noop from 'lodash/fp/noop'
 
 import { FlexVerticalCenter, Flex } from '../style'
@@ -15,7 +11,7 @@ import Text from '../text'
 import TextInput from '../textInput'
 import Button from '../button'
 
-export const PlaylistModalPure = ({
+export const ModalPure = ({
   isOpen,
   onClose,
   onSave,
@@ -28,7 +24,7 @@ export const PlaylistModalPure = ({
     isOpen={isOpen}
     onAfterOpen={noop}
     onRequestClose={onClose}
-    contentLabel="SavePlaylistModal"
+    contentLabel="SaveModal"
     style={{
       content: {
         background: 'rgb(57, 57, 57)',
@@ -87,7 +83,7 @@ export const PlaylistModalPure = ({
 )
 
 // eslint-disable-next-line
-PlaylistModalPure.propTypes = {
+ModalPure.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
@@ -98,8 +94,8 @@ PlaylistModalPure.propTypes = {
 }
 
 // eslint-disable-next-line
-PlaylistModalPure.defaultProps = {}
+ModalPure.defaultProps = {}
 
-const PlaylistModal = compose(pure)(PlaylistModalPure)
+const ModalComposed = compose(pure)(ModalPure)
 
-export default PlaylistModal
+export default ModalComposed

@@ -1,101 +1,90 @@
-/* eslint-disable */
+import React from 'react'
+import PropTypes from 'prop-types'
+import {
+  lifecycle,
+  compose,
+  pure,
+  withStateHandlers,
+  defaultProps
+} from 'recompose'
 
-import React, { Component } from 'react'
-
-import { getSpotifyUrl, getMeInformation, search, getRelatedArtist } from 'api'
-
+import { getMeInformation, queryParams } from 'api'
 import { FlexVerticalCenter, AppContainer } from 'components/style'
-
-import { getItemFromStorage, storeItem } from 'helpers/localStorage'
-
+import { storeItem } from 'helpers/localStorage'
 import Button from 'components/button'
 import TextInput from 'components/textInput'
 import Text from 'components/text'
 
+const splithash = hash => hash.split('=')
+
 // eslint-disable-next-line
-class Search extends Component {
+const searchTrack = searchText =>
   // eslint-disable-next-line
-  constructor() {
-    // eslint-disable-next-line
-    super()
-    // eslint-disable-next-line
-    this.state = {
-      id: '-----------',
-      spotifyUrl: getSpotifyUrl(),
-      songSearchText: 'muse'
-    }
+  (window.location = `/player?${queryParams({ play: searchText })}`)
 
-    const hash = window.location.hash
-    const splithash = hash => hash.split('=')
+const SearchPure = ({ id, searchText, changeSearchText, onSearch }) => (
+  <AppContainer>
+    <div style={{ width: '100%', maxWidth: '420px' }}>
+      <FlexVerticalCenter>
+        <Text size="large" text={`Hello, ${id}`} />
+        <Text size="medium" text={'Please enter a song to get started'} />
+        <TextInput onChange={changeSearchText} value={searchText} />
+        <Button onClick={() => onSearch(searchText)} text={'Search'} />
+      </FlexVerticalCenter>
+    </div>
+  </AppContainer>
+)
 
-    if (window.location.pathname.includes('callback')) {
-      storeItem({ key: 'token', item: splithash(hash)[1] })
-      this.state = Object.assign({}, this.state, {
-        token: splithash(hash)[1],
-        type: splithash(hash)[2].split('&')[0]
-      })
-    } else {
-      const token = getItemFromStorage('token')
-      if (token && token.length > 0) {
-        this.state = Object.assign({}, this.state, {
-          token: token,
-          type: 'Bearer'
-        })
-      } else {
-        window.location = this.state.spotifyUrl
-      }
-    }
-  }
-
-  componentDidMount() {
-    const { type, token } = this.state
-    getMeInformation({ type, token }).fork(console.error, res => {
-      if (res.error) {
-        return (window.location = this.state.spotifyUrl)
-      }
-      storeItem({ key: 'id', item: res.id })
-      this.setState({ id: res.id })
-    })
-  }
-
-  searchTrack = () => {
-    const { type, token, songSearchText } = this.state
-    if (songSearchText.length > 0) {
-      search({ type, token })(songSearchText).fork(console.error, res =>
-        this.setState({
-          currentSong: res.tracks.items
-            .filter(o => o.preview_url)
-            .sort((a, b) => a.popularity - b.popularity)[0],
-          playAudio: true
-        })
-      )
-    }
-  }
-
-  handleSongTextChange = e => {
-    e.preventDefault()
-    this.setState({ songSearchText: e.target.value })
-  }
-
-  render() {
-    const { id, songSearchText } = this.state
-
-    return (
-      <AppContainer>
-        <div style={{ width: '100%', maxWidth: '420px' }}>
-          <FlexVerticalCenter>
-            <Text size="large" text={`Hello, ${id}`} />
-            <Text size="medium" text={'Please enter a song to get started'} />
-            <TextInput
-              onChange={this.handleSongTextChange}
-              value={songSearchText}
-            />
-            <Button onClick={this.searchTrack} text={'Search'} />
-          </FlexVerticalCenter>
-        </div>
-      </AppContainer>
-    )
-  }
+// eslint-disable-next-line
+SearchPure.propTypes = {
+  id: PropTypes.string.isRequired,
+  searchText: PropTypes.string.isRequired,
+  changeSearchText: PropTypes.func.isRequired,
+  onSearch: PropTypes.func.isRequired
 }
+
+const Search = compose(
+  defaultProps({
+    id: '-----------',
+    searchText: 'muse',
+    onSearch: searchTrack
+  }),
+  withStateHandlers(
+    ({ searchText }) => ({
+      searchText
+    }),
+    {
+      changeSearchText: () => event => {
+        // eslint-disable-next-line
+        event.preventDefault()
+        return { searchText: event.target.value }
+      }
+    }
+  ),
+  lifecycle({
+    // eslint-disable-next-line
+    componentDidMount() {
+      // eslint-disable-next-line
+      const hash = window.location.hash
+      // eslint-disable-next-line
+      const token = splithash(hash)[1]
+      // eslint-disable-next-line
+      storeItem({ key: 'token', item: token })
+      // eslint-disable-next-line
+      getMeInformation(token).fork(console.error, res => {
+        // eslint-disable-next-line
+        if (res.error) {
+          // eslint-disable-next-line
+          return (window.location = '/')
+        }
+        // eslint-disable-next-line
+        storeItem({ key: 'id', item: res.id })
+        // eslint-disable-next-line
+        this.setState({ id: res.id })
+      })
+    }
+  }),
+  pure
+)(SearchPure)
 
 export default Search

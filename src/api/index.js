@@ -4,7 +4,8 @@ import {
   createPlaylist,
   search,
   getRelatedArtist,
-  addTracksToPlaylist
+  addTracksToPlaylist,
+  queryParams
 } from './spotify'
 
 export {
@@ -13,5 +14,6 @@ export {
   createPlaylist,
   search,
   getRelatedArtist,
-  addTracksToPlaylist
+  addTracksToPlaylist,
+  queryParams
 }

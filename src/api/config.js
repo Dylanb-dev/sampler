@@ -7,3 +7,5 @@ export const REDIRECT_URI =
   process.env.NODE_ENV === 'production'
     ? 'https://d27li4hngmqekl.cloudfront.net'
     : 'http://localhost:3000'
+
+export const AUTH_TYPE = 'Bearer'

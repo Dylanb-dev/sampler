@@ -3,12 +3,12 @@
 import React from 'react'
 import renderer from 'react-test-renderer'
 
-import PlaylistModal from './'
+import Modal from './'
 
-test('PlaylistModal renders correctly', () => {
+test('Modal renders correctly', () => {
   const props = {}
 
-  const tree = renderer.create(<PlaylistModal {...props} />).toJSON();
+  const tree = renderer.create(<Modal {...props} />).toJSON()
 
   expect(tree).toMatchSnapshot()
 })
