@@ -1,21 +1,19 @@
 import React from 'react'
-
-import { getSpotifyUrl } from 'api'
-
-import { FlexVerticalCenter, AppContainer } from 'components/style'
-
-import { getItemFromStorage, clearStorage } from 'helpers/localStorage'
 import MDSpinner from 'react-md-spinner'
 import { lifecycle, compose, pure } from 'recompose'
 
-import Text from '../../components/text'
+import { getSpotifyUrl } from 'api'
+import { FlexVerticalCenter, AppContainer } from 'components/style'
+import { clearStorage } from 'helpers/localStorage'
+import Text from 'components/text'
 
 const StartPure = () => (
   <AppContainer>
     <div style={{ width: '100%', maxWidth: '420px' }}>
       <FlexVerticalCenter>
         <Text size="large" text={'Sampler App'} />
-        <MDSpinner singleColor="green" />
+        <Text size="medium" text={'Getting ready...'} />
+        <MDSpinner singleColor="white" />
       </FlexVerticalCenter>
     </div>
   </AppContainer>
@@ -24,8 +22,10 @@ const StartPure = () => (
 const Start = compose(
   lifecycle({
     componentDidMount() {
+      // eslint-disable-next-line
       clearStorage()
-      window.location = getSpotifyUrl()
+      // eslint-disable-next-line
+      return (window.location = getSpotifyUrl())
     }
   }),
   pure
