@@ -2,9 +2,9 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import { pure } from 'recompose'
+import { pure, compose } from 'recompose'
 
-const TextInput = ({ value, onChange }) => (
+const TextInputPure = ({ value, onChange }) => (
   <input
     style={{
       margin: '16px',
@@ -22,12 +22,14 @@ const TextInput = ({ value, onChange }) => (
 )
 
 // eslint-disable-next-line
-TextInput.propTypes = {
+TextInputPure.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired
 }
 
 // eslint-disable-next-line
-TextInput.defaultProps = {}
+TextInputPure.defaultProps = {}
 
-export default pure(TextInput)
+const TextInput = compose(pure)(TextInputPure)
+
+export default TextInput

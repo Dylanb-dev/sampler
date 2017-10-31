@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 import React, { Component } from 'react'
-import { ScrollView } from 'react-native-web'
 import {
   getSpotifyUrl,
   getMeInformation,
@@ -11,9 +10,7 @@ import {
   addTracksToPlaylist
 } from 'api'
 import { Motion, spring } from 'react-motion'
-import { isEmpty, isEqual } from 'lodash/fp'
-import Modal from 'react-modal'
-import MDSpinner from 'react-md-spinner'
+
 import format from 'date-fns/format'
 
 import {
@@ -26,6 +23,8 @@ import {
 
 import Button from 'components/button'
 import TextInput from 'components/textInput'
+import Text from 'components/text'
+import PlaylistModal from 'components/playlistModal'
 
 const springSetting1 = { stiffness: 180, damping: 10 }
 const [count, width, height] = [11, 70, 90]
@@ -33,7 +32,7 @@ const [count, width, height] = [11, 70, 90]
 const randomNumber = maxLen => Math.floor(Math.random() * (maxLen + 1))
 
 // eslint-disable-next-line
-class App extends Component {
+class Player extends Component {
   // eslint-disable-next-line
   constructor() {
     // eslint-disable-next-line
@@ -349,154 +348,139 @@ class App extends Component {
         >
           <FlexVerticalCenter>
             <MDSpinner singleColor="green" />
-            <ArtistText artist={'Saving your playlist...'} isBlur={false} />
+            <LargeText text={'Saving your playlist...'} isBlur={false} />
           </FlexVerticalCenter>
         </Modal>
         <div style={{ width: '100%', maxWidth: '420px' }}>
-          {isEmpty(currentSong) && songArray.length === 0 ? (
-            <FlexVerticalCenter>
-              <SongText song={`Hello, ${id}`} isBlur={false} />
-              <ArtistText
-                artist={'Please enter a song to get started'}
-                isBlur={false}
-              />
-              <TextInput
-                onChange={this.handleSongTextChange}
-                value={songSearchText}
-              />
-              <Button onClick={this.searchTrack} text={'Search'} />
-            </FlexVerticalCenter>
-          ) : (
-            <FlexBetween>
-              <ColumnSection>
+          <FlexBetween>
+            <ColumnSection>
+              <div
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  backgroundColor: `${isPressed &&
+                  this.isDecline({ x, appWidth })
+                    ? 'red'
+                    : 'transparent'}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
                 <div
                   style={{
-                    height: '100%',
-                    width: '100%',
-                    backgroundColor: `${isPressed &&
-                    this.isDecline({ x, appWidth })
-                      ? 'red'
-                      : 'transparent'}`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center'
+                    color: `${isPressed ? 'white' : 'transparent'}`,
+                    fontSize: '24px',
+                    marginTop: '22px',
+                    transition: '400ms ease 50ms'
                   }}
                 >
-                  <div
-                    style={{
-                      color: `${isPressed ? 'white' : 'transparent'}`,
-                      fontSize: '24px',
-                      marginTop: '22px',
-                      transition: '400ms ease 50ms'
-                    }}
-                  >
-                    X
-                  </div>
+                  X
                 </div>
-              </ColumnSection>
+              </div>
+            </ColumnSection>
 
-              <ColumnSection>
-                {playAudio && (
-                  <audio autoPlay className="player" preload="false">
-                    <source src={currentSong.preview_url} />
-                  </audio>
+            <ColumnSection>
+              {playAudio && (
+                <audio autoPlay className="player" preload="false">
+                  <source src={currentSong.preview_url} />
+                </audio>
+              )}
+              <LargeText text={id} isBlur={isPressed} />
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginLeft: '-64px',
+                  marginRight: '-64px',
+                  height: 'calc(100vh - 400px)'
+                }}
+              >
+                <SongText song={currentSong.name} isBlur={isPressed} />
+                <LargeText
+                  text={currentSong.artists[0].name}
+                  isBlur={isPressed}
+                />
+              </div>
+
+              <Motion style={style}>
+                {({ translateX, translateY, scale, boxShadow }) => (
+                  <div
+                    onMouseDown={this.handleMouseDown.bind(null, [x, y])}
+                    onTouchStart={this.handleTouchStart.bind(null, [x, y])}
+                    style={{
+                      borderRadius: '100%',
+                      WebkitTransform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
+                      transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
+                      boxShadow: `${boxShadow}px 5px 5px rgba(0,0,0,0.5)`,
+                      backgroundImage: `url(${currentSong.album.images[0]
+                        .url})`,
+                      height: '128px',
+                      width: '128px',
+                      margin: '32px',
+                      backgroundSize: 'cover'
+                    }}
+                  />
                 )}
-                <ArtistText artist={id} isBlur={isPressed} />
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    marginLeft: '-64px',
-                    marginRight: '-64px',
-                    height: 'calc(100vh - 400px)'
-                  }}
-                >
-                  <SongText song={currentSong.name} isBlur={isPressed} />
-                  <ArtistText
-                    artist={currentSong.artists[0].name}
-                    isBlur={isPressed}
-                  />
-                </div>
+              </Motion>
+              <LargeText text={'^^ Touch album ^^'} isBlur={isPressed} />
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  justifyContent: 'space-around',
+                  alignItems: 'center',
+                  marginLeft: '-64px',
+                  marginRight: '-64px',
+                  height: '100px'
+                }}
+              >
+                <Button
+                  onClick={() =>
+                    this.setState({ currentSong: {}, songArray: [] })}
+                  secondary
+                  text={'Back'}
+                  isBlur={isPressed}
+                />
 
-                <Motion style={style}>
-                  {({ translateX, translateY, scale, boxShadow }) => (
-                    <div
-                      onMouseDown={this.handleMouseDown.bind(null, [x, y])}
-                      onTouchStart={this.handleTouchStart.bind(null, [x, y])}
-                      style={{
-                        borderRadius: '100%',
-                        WebkitTransform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-                        transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-                        boxShadow: `${boxShadow}px 5px 5px rgba(0,0,0,0.5)`,
-                        backgroundImage: `url(${currentSong.album.images[0]
-                          .url})`,
-                        height: '128px',
-                        width: '128px',
-                        margin: '32px',
-                        backgroundSize: 'cover'
-                      }}
-                    />
-                  )}
-                </Motion>
-                <ArtistText artist={'^^ Touch album ^^'} isBlur={isPressed} />
+                <Button
+                  onClick={() => this.setState({ savePlaylist: true })}
+                  text={'Save'}
+                  isBlur={isPressed}
+                />
+              </div>
+            </ColumnSection>
+            <ColumnSection>
+              <div
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  backgroundColor: `${isPressed &&
+                  this.isAccept({ x, appWidth })
+                    ? 'green'
+                    : 'transparent'}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
                 <div
                   style={{
-                    display: 'flex',
-                    width: '100%',
-                    justifyContent: 'space-around',
-                    alignItems: 'center',
-                    marginLeft: '-64px',
-                    marginRight: '-64px',
-                    height: '100px'
+                    color: `${isPressed ? 'white' : 'transparent'}`,
+                    fontSize: '24px',
+                    marginTop: '22px',
+                    transition: '400ms ease 50ms'
                   }}
                 >
-                  <Button
-                    onClick={() =>
-                      this.setState({ currentSong: {}, songArray: [] })}
-                    secondary
-                    text={'Back'}
-                    isBlur={isPressed}
-                  />
-
-                  <Button
-                    onClick={() => this.setState({ savePlaylist: true })}
-                    text={'Save'}
-                    isBlur={isPressed}
-                  />
+                  {'\u2714'}
                 </div>
-              </ColumnSection>
-              <ColumnSection>
-                <div
-                  style={{
-                    height: '100%',
-                    width: '100%',
-                    backgroundColor: `${isPressed &&
-                    this.isAccept({ x, appWidth })
-                      ? 'green'
-                      : 'transparent'}`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div
-                    style={{
-                      color: `${isPressed ? 'white' : 'transparent'}`,
-                      fontSize: '24px',
-                      marginTop: '22px',
-                      transition: '400ms ease 50ms'
-                    }}
-                  >
-                    {'\u2714'}
-                  </div>
-                </div>
-              </ColumnSection>
-            </FlexBetween>
-          )}
+              </div>
+            </ColumnSection>
+          </FlexBetween>
         </div>
       </AppContainer>
     )
@@ -531,7 +515,7 @@ const SongText = ({ song, isBlur }) => (
   </div>
 )
 
-const ArtistText = ({ artist, isBlur }) => (
+const LargeText = ({ artist, isBlur }) => (
   <div
     style={{
       color: `${isBlur ? 'transparent' : 'white'}`,
@@ -545,4 +529,4 @@ const ArtistText = ({ artist, isBlur }) => (
   </div>
 )
 
-export default App
+export default Player

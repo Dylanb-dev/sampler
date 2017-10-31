@@ -17,10 +17,6 @@ import MDSpinner from 'react-md-spinner'
 import format from 'date-fns/format'
 
 import {
-  FlexBetween,
-  FlexVerticalCenter,
-  Flex,
-  ColumnSection,
   AppContainer
 } from 'components/style'
 
@@ -349,15 +345,15 @@ class App extends Component {
         >
           <FlexVerticalCenter>
             <MDSpinner singleColor="green" />
-            <ArtistText artist={'Saving your playlist...'} isBlur={false} />
+            <LargeText text={'Saving your playlist...'} isBlur={false} />
           </FlexVerticalCenter>
         </Modal>
         <div style={{ width: '100%', maxWidth: '420px' }}>
           {isEmpty(currentSong) && songArray.length === 0 ? (
             <FlexVerticalCenter>
               <SongText song={`Hello, ${id}`} isBlur={false} />
-              <ArtistText
-                artist={'Please enter a song to get started'}
+              <LargeText
+                text={'Please enter a song to get started'}
                 isBlur={false}
               />
               <TextInput
@@ -402,7 +398,7 @@ class App extends Component {
                     <source src={currentSong.preview_url} />
                   </audio>
                 )}
-                <ArtistText artist={id} isBlur={isPressed} />
+                <LargeText text={id} isBlur={isPressed} />
                 <div
                   style={{
                     display: 'flex',
@@ -415,8 +411,8 @@ class App extends Component {
                   }}
                 >
                   <SongText song={currentSong.name} isBlur={isPressed} />
-                  <ArtistText
-                    artist={currentSong.artists[0].name}
+                  <LargeText
+                    text={currentSong.artists[0].name}
                     isBlur={isPressed}
                   />
                 </div>
@@ -441,7 +437,7 @@ class App extends Component {
                     />
                   )}
                 </Motion>
-                <ArtistText artist={'^^ Touch album ^^'} isBlur={isPressed} />
+                <LargeText text={'^^ Touch album ^^'} isBlur={isPressed} />
                 <div
                   style={{
                     display: 'flex',
@@ -531,7 +527,7 @@ const SongText = ({ song, isBlur }) => (
   </div>
 )
 
-const ArtistText = ({ artist, isBlur }) => (
+const LargeText = ({ artist, isBlur }) => (
   <div
     style={{
       color: `${isBlur ? 'transparent' : 'white'}`,

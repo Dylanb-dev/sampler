@@ -33,6 +33,7 @@
     "eslint-config-airbnb": "^15.1.0",
     "eslint-config-cleanjs": "^4.0.0",
     "eslint-config-prettier": "^2.6.0",
+    "eslint-import-resolver-webpack": "^0.8.3",
     "eslint-plugin-better": "^0.1.5",
     "eslint-plugin-fp": "^2.3.0",
     "eslint-plugin-import": "^2.7.0",
@@ -44,7 +45,6 @@
     "prop-types": "^15.6.0",
     "ramda": "^0.25.0",
     "react-test-renderer": "^16.0.0",
-    "serverless-single-page-app-plugin":
-      "file:./serverless-single-page-app-plugin"
+    "serverless-single-page-app-plugin": "file:./serverless-single-page-app-plugin"
   }
 }
