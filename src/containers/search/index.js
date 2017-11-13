@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import * as R from 'ramda'
 import {
   lifecycle,
   compose,
@@ -9,18 +10,15 @@ import {
 } from 'recompose'
 
 import { getMeInformation, queryParams } from 'api'
+import { redirect } from 'helpers/window'
 import { FlexVerticalCenter, AppContainer } from 'components/style'
 import { storeItem } from 'helpers/localStorage'
 import Button from 'components/button'
 import TextInput from 'components/textInput'
 import Text from 'components/text'
 
-const splithash = hash => hash.split('=')
-
-// eslint-disable-next-line
 const searchTrack = searchText =>
-  // eslint-disable-next-line
-  (window.location = `/player?${queryParams({ play: searchText })}`)
+  redirect(`/player?${queryParams({ play: searchText })}`)
 
 const SearchPure = ({ id, searchText, changeSearchText, onSearch }) => (
   <AppContainer>
@@ -34,6 +32,9 @@ const SearchPure = ({ id, searchText, changeSearchText, onSearch }) => (
     </div>
   </AppContainer>
 )
+
+const splithash = hash => hash.split('=')
+const getToken = R.compose(R.prop(1), splithash, R.prop('hash'))
 
 // eslint-disable-next-line
 SearchPure.propTypes = {
@@ -62,26 +63,15 @@ const Search = compose(
     }
   ),
   lifecycle({
-    // eslint-disable-next-line
     componentDidMount() {
       // eslint-disable-next-line
-      const hash = window.location.hash
-      // eslint-disable-next-line
-      const token = splithash(hash)[1]
-      // eslint-disable-next-line
-      storeItem({ key: 'token', item: token })
-      // eslint-disable-next-line
-      getMeInformation(token).fork(console.error, res => {
-        // eslint-disable-next-line
-        if (res.error) {
+      const { location } = this.props
+      return (
+        getMeInformation(getToken(location))
+          .chain(res => storeItem({ key: 'id', item: res.id }))
           // eslint-disable-next-line
-          return (window.location = '/')
-        }
-        // eslint-disable-next-line
-        storeItem({ key: 'id', item: res.id })
-        // eslint-disable-next-line
-        this.setState({ id: res.id })
-      })
+          .fork(() => redirect('/'), res => this.setState({ id: res.item }))
+      )
     }
   }),
   pure

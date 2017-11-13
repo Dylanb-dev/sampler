@@ -28,7 +28,7 @@ const App = ({ childProps }) => (
 // eslint-disable-next-line
 App.propTypes = {
   // eslint-disable-next-line
-  childProps: PropTypes.object.isRequired
+  childProps: PropTypes.object
 }
 
 export default App

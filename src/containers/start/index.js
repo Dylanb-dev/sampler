@@ -1,10 +1,12 @@
 import React from 'react'
 import MDSpinner from 'react-md-spinner'
+import * as R from 'ramda'
 import { lifecycle, compose, pure } from 'recompose'
 
 import { getSpotifyUrl } from 'api'
 import { FlexVerticalCenter, AppContainer } from 'components/style'
 import { clearStorage } from 'helpers/localStorage'
+import { redirect } from 'helpers/window'
 import Text from 'components/text'
 
 const StartPure = () => (
@@ -18,13 +20,12 @@ const StartPure = () => (
   </AppContainer>
 )
 
+const RedirectToSpotifyUrl = R.compose(redirect, getSpotifyUrl)
+
 const Start = compose(
   lifecycle({
     componentDidMount() {
-      // eslint-disable-next-line
-      clearStorage()
-      // eslint-disable-next-line
-      return (window.location = getSpotifyUrl())
+      return clearStorage.fork(() => redirect('/'), RedirectToSpotifyUrl)
     }
   }),
   pure

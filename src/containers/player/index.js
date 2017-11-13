@@ -1,19 +1,21 @@
-/* eslint-disable */
-
 import React, { Component } from 'react'
 import format from 'date-fns/format'
 import PropTypes from 'prop-types'
+import { Motion, spring } from 'react-motion'
+import {
+  lifecycle,
+  compose,
+  pure,
+  withStateHandlers,
+  defaultProps
+} from 'recompose'
 
 import {
-  getSpotifyUrl,
-  getMeInformation,
   createPlaylist,
   search,
   getRelatedArtist,
   addTracksToPlaylist
 } from 'api'
-import { Motion, spring } from 'react-motion'
-
 import {
   FlexBetween,
   FlexVerticalCenter,
@@ -21,7 +23,6 @@ import {
   ColumnSection,
   AppContainer
 } from 'components/style'
-
 import Button from 'components/button'
 import TextInput from 'components/textInput'
 import Text from 'components/text'
@@ -32,15 +33,15 @@ const [count, width, height] = [11, 70, 90]
 
 const randomNumber = maxLen => Math.floor(Math.random() * (maxLen + 1))
 
-const savePlaylist = ({ songArray, playlistName }) => {
-  this.setState({ saving: true })
-  window.localStorage.setItem('playlistName', playlistName)
-  window.localStorage.setItem('songArray', JSON.stringify(songArray))
-  window.location = '/save'
-}
+// const savePlaylist = ({ songArray, playlistName }) => {
+//   this.setState({ saving: true })
+//   window.localStorage.setItem('playlistName', playlistName)
+//   window.localStorage.setItem('songArray', JSON.stringify(songArray))
+//   window.location = '/save'
+// }
 
 // eslint-disable-next-line
-class Player extends Component {
+class PlayerPure extends Component {
   handleTouchStart = (pressLocation, e) =>
     this.handleMouseDown(pressLocation, e.touches[0])
 
@@ -65,37 +66,30 @@ class Player extends Component {
     })
   }
 
-  playNextSong = () => {
-    const { type, token, currentSong, songArray } = this.state
+  // playNextSong = () => {
+  //   const { type, token, currentSong, songArray } = this.state
 
-    let index = songArray.length - 1
-    this.setState({ playAudio: false })
+  //   const index = songArray.length - 1
+  //   this.setState({ playAudio: false })
 
-    return getRelatedArtist({ type, token })(currentSong.artists[0].id)
-      .chain(artistRes =>
-        search({ type, token })(
-          artistRes.artists.length > 1
-            ? artistRes.artists[randomNumber(artistRes.artists.length - 1)].name
-            : currentSong.name
-        )
-      )
-      .fork(console.error, res =>
-        this.setState({
-          currentSong: res.tracks.items
-            .filter(o => o.preview_url)
-            .filter(o => !isEqual(o, songArray[index]))
-            .sort((a, b) => a.popularity - b.popularity)[0],
-          playAudio: true
-        })
-      )
-  }
-
-  resetAlbumPostion = () =>
-    this.setState({
-      isPressed: false,
-      mouseCircleDelta: [0, 0],
-      mouseXY: [0, 0]
-    })
+  //   return getRelatedArtist({ type, token })(currentSong.artists[0].id)
+  //     .chain(artistRes =>
+  //       search({ type, token })(
+  //         artistRes.artists.length > 1
+  //           ? artistRes.artists[randomNumber(artistRes.artists.length - 1)].name
+  //           : currentSong.name
+  //       )
+  //     )
+  //     .fork(console.error, res =>
+  //       this.setState({
+  //         currentSong: res.tracks.items
+  //           .filter(o => o.preview_url)
+  //           .filter(o => !isEqual(o, songArray[index]))
+  //           .sort((a, b) => a.popularity - b.popularity)[0],
+  //         playAudio: true
+  //       })
+  //     )
+  // }
 
   handleMouseUp = () => {
     const { appWidth, mouseXY, songArray, currentSong } = this.state
@@ -249,7 +243,7 @@ class Player extends Component {
                   <source src={currentSong.preview_url} />
                 </audio>
               )}
-              <LargeText text={id} isBlur={isPressed} />
+              <Text size="large" text={id} isBlur={isPressed} />
               <div
                 style={{
                   display: 'flex',
@@ -261,13 +255,13 @@ class Player extends Component {
                   height: 'calc(100vh - 400px)'
                 }}
               >
-                <SongText song={currentSong.name} isBlur={isPressed} />
-                <LargeText
+                <Text size="large" text={currentSong.name} isBlur={isPressed} />
+                <Text
+                  size="medium"
                   text={currentSong.artists[0].name}
                   isBlur={isPressed}
                 />
               </div>
-
               <Motion style={style}>
                 {({ translateX, translateY, scale, boxShadow }) => (
                   <div
@@ -288,7 +282,11 @@ class Player extends Component {
                   />
                 )}
               </Motion>
-              <LargeText text={'^^ Touch album ^^'} isBlur={isPressed} />
+              <Text
+                size="large"
+                text={'^^ Touch album ^^'}
+                isBlur={isPressed}
+              />
               <div
                 style={{
                   display: 'flex',
@@ -371,18 +369,37 @@ const PlayerPure = compose(
         event.preventDefault()
         return { playlistName: event.target.value }
       }
+    },
+    {
+      resetAlbumPostion: () => () => ({
+        isPressed: false,
+        mouseCircleDelta: [0, 0],
+        mouseXY: [0, 0]
+      })
+    },
+    {
+      savePlaylist: ({ songArray, playlistName }) => event => {
+        // eslint-disable-next-line
+        event.preventDefault()
+        this.setState({ saving: true })
+        window.localStorage.setItem('playlistName', playlistName)
+        window.localStorage.setItem('songArray', JSON.stringify(songArray))
+        window.location = '/save'
+      }
     }
   ),
   lifecycle({
     // eslint-disable-next-line
     componentDidMount() {
-      // eslint-disable-next-line
-      window.addEventListener('touchmove', this.handleTouchMove)
-      // eslint-disable-next-line
+      window.addEventListener('touchmove', ({ pageX, pageY }) => {
+        const { isPressed, mouseCircleDelta: [dx, dy] } = this.props
+        if (isPressed) {
+          const mouseXY = [pageX - dx, pageY - dy]
+          this.setState({ mouseXY })
+        }
+      })
       window.addEventListener('touchend', this.handleMouseUp)
-      // eslint-disable-next-line
       window.addEventListener('mousemove', this.handleMouseMove)
-      // eslint-disable-next-line
       window.addEventListener('mouseup', this.handleMouseUp)
 
       const token = getItemFromStorage('token')
@@ -395,7 +412,9 @@ const PlayerPure = compose(
           // eslint-disable-next-line
           return (window.location = '/')
         }
-        this.setState({
+        // eslint-disable-next-line
+        return this.setState({
+          // eslint-disable-next-line
           currentSong: res.tracks.items
             .filter(o => o.preview_url)
             .sort((a, b) => a.popularity - b.popularity)[0],

@@ -1,8 +1,16 @@
-export const clearStorage = () => localStorage.clear()
+import Future from 'fluture/index'
 
-export const getItemFromStorage = key => JSON.parse(localStorage.getItem(key))
+export const clearStorage = Future.try(() => localStorage.clear())
+
+export const getItemFromStorage = key =>
+  Future.try(() => localStorage.getItem(key)).chain(Future.encase(JSON.parse))
 
 export const storeItem = ({ key, item }) =>
-  localStorage.setItem(key, JSON.stringify(item))
+  Future.try(() => JSON.stringify(item)).chain(res =>
+    Future.try(() => localStorage.setItem(key, res)).chain(() =>
+      Future.try(() => ({ key, item }))
+    )
+  )
 
-export const removeItemFromStorage = item => localStorage.removeItem(item)
+export const removeItemFromStorage = item =>
+  Future.try(() => localStorage.removeItem(item))

@@ -21,7 +21,8 @@ const Button = ({ text, onClick, secondary, isBlur }) => (
         ? secondary ? 'rgba(255,255,255,0.1)' : 'rgba(0,128,0,0.1)'
         : secondary ? 'white' : 'green',
       boxShadow: isBlur ? 'none' : '0px 8px 15px rgba(0, 0, 0, 0.1)',
-      transition: 'all 0.3s ease 0s'
+      transition: 'all 0.3s ease 0s',
+      cursor: 'pointer'
     }}
   >
     {text}
