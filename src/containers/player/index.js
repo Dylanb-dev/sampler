@@ -1,13 +1,18 @@
 import React, { Component } from 'react'
+import { ScrollView } from 'react-native-web'
+import isEqual from 'lodash/fp/isEqual'
 import format from 'date-fns/format'
 import PropTypes from 'prop-types'
+import * as R from 'ramda'
 import { Motion, spring } from 'react-motion'
 import {
   lifecycle,
   compose,
   pure,
   withStateHandlers,
-  defaultProps
+  branch,
+  defaultProps,
+  renderComponent
 } from 'recompose'
 
 import {
@@ -16,6 +21,7 @@ import {
   getRelatedArtist,
   addTracksToPlaylist
 } from 'api'
+import { redirect } from 'helpers/window'
 import {
   FlexBetween,
   FlexVerticalCenter,
@@ -23,6 +29,7 @@ import {
   ColumnSection,
   AppContainer
 } from 'components/style'
+import { getItemFromStorage } from 'helpers/localStorage'
 import Button from 'components/button'
 import TextInput from 'components/textInput'
 import Text from 'components/text'
@@ -33,12 +40,12 @@ const [count, width, height] = [11, 70, 90]
 
 const randomNumber = maxLen => Math.floor(Math.random() * (maxLen + 1))
 
-// const savePlaylist = ({ songArray, playlistName }) => {
-//   this.setState({ saving: true })
-//   window.localStorage.setItem('playlistName', playlistName)
-//   window.localStorage.setItem('songArray', JSON.stringify(songArray))
-//   window.location = '/save'
-// }
+const savePlaylist = ({ songArray, playlistName }) => {
+  this.setState({ saving: true })
+  window.localStorage.setItem('playlistName', playlistName)
+  window.localStorage.setItem('songArray', JSON.stringify(songArray))
+  window.location = '/save'
+}
 
 // eslint-disable-next-line
 class PlayerPure extends Component {
@@ -66,30 +73,30 @@ class PlayerPure extends Component {
     })
   }
 
-  // playNextSong = () => {
-  //   const { type, token, currentSong, songArray } = this.state
+  playNextSong = () => {
+    const { type, token, currentSong, songArray } = this.state
 
-  //   const index = songArray.length - 1
-  //   this.setState({ playAudio: false })
+    const index = songArray.length - 1
+    this.setState({ playAudio: false })
 
-  //   return getRelatedArtist({ type, token })(currentSong.artists[0].id)
-  //     .chain(artistRes =>
-  //       search({ type, token })(
-  //         artistRes.artists.length > 1
-  //           ? artistRes.artists[randomNumber(artistRes.artists.length - 1)].name
-  //           : currentSong.name
-  //       )
-  //     )
-  //     .fork(console.error, res =>
-  //       this.setState({
-  //         currentSong: res.tracks.items
-  //           .filter(o => o.preview_url)
-  //           .filter(o => !isEqual(o, songArray[index]))
-  //           .sort((a, b) => a.popularity - b.popularity)[0],
-  //         playAudio: true
-  //       })
-  //     )
-  // }
+    return getRelatedArtist({ type, token })(currentSong.artists[0].id)
+      .chain(artistRes =>
+        search({ type, token })(
+          artistRes.artists.length > 1
+            ? artistRes.artists[randomNumber(artistRes.artists.length - 1)].name
+            : currentSong.name
+        )
+      )
+      .fork(console.error, res =>
+        this.setState({
+          currentSong: res.tracks.items
+            .filter(o => o.preview_url)
+            .filter(o => !isEqual(o, songArray[index]))
+            .sort((a, b) => a.popularity - b.popularity)[0],
+          playAudio: true
+        })
+      )
+  }
 
   handleMouseUp = () => {
     const { appWidth, mouseXY, songArray, currentSong } = this.state
@@ -172,24 +179,25 @@ class PlayerPure extends Component {
                 width: '100%'
               }}
             >
-              {songArray.map(o => (
-                <div
-                  key={o.id}
-                  style={{
-                    width: 'calc(100% - 36px)',
-                    padding: '8px 16px',
-                    margin: '4px',
-                    borderRadius: '32px',
-                    backgroundColor: 'green',
-                    color: 'white'
-                  }}
-                >
-                  <p>{`${o.name}`}</p>
-                  <p style={{ fontSize: '12px' }}>{`${o.artists.map(
-                    o => o.name
-                  )}`}</p>
-                </div>
-              ))}
+              {songArray.length > 0 &&
+                songArray.map(o => (
+                  <div
+                    key={o.id}
+                    style={{
+                      width: 'calc(100% - 36px)',
+                      padding: '8px 16px',
+                      margin: '4px',
+                      borderRadius: '32px',
+                      backgroundColor: 'green',
+                      color: 'white'
+                    }}
+                  >
+                    <p>{`${o.name}`}</p>
+                    <p style={{ fontSize: '12px' }}>{`${o.artists.map(
+                      o => o.name
+                    )}`}</p>
+                  </div>
+                ))}
             </ScrollView>
             <TextInput
               onChange={this.handlePlaylistTextChange}
@@ -243,7 +251,7 @@ class PlayerPure extends Component {
                   <source src={currentSong.preview_url} />
                 </audio>
               )}
-              <Text size="large" text={id} isBlur={isPressed} />
+              <Text size="large" text={'test'} isBlur={isPressed} />
               <div
                 style={{
                   display: 'flex',
@@ -347,7 +355,7 @@ class PlayerPure extends Component {
   }
 }
 
-const PlayerPure = compose(
+const Player = compose(
   defaultProps({
     mouseXY: [0, 0],
     savePlaylist: false,
@@ -402,28 +410,33 @@ const PlayerPure = compose(
       window.addEventListener('mousemove', this.handleMouseMove)
       window.addEventListener('mouseup', this.handleMouseUp)
 
-      const token = getItemFromStorage('token')
-
-      const query = window.location.query
       // eslint-disable-next-line
-      search({ type, token })(songSearchText).fork(console.error, res => {
-        // eslint-disable-next-line
-        if (res.error) {
-          // eslint-disable-next-line
-          return (window.location = '/')
-        }
-        // eslint-disable-next-line
-        return this.setState({
-          // eslint-disable-next-line
-          currentSong: res.tracks.items
-            .filter(o => o.preview_url)
-            .sort((a, b) => a.popularity - b.popularity)[0],
-          playAudio: true
-        })
-      })
+      getItemFromStorage('token')
+        .chain(res => search(res)(window.location.query))
+        .fork(
+          () => redirect('/'),
+          res => {
+            if (res.error) {
+              redirect('/')
+            }
+
+            // eslint-disable-next-line
+            this.setState({
+              // eslint-disable-next-line
+              currentSong: res.tracks.items
+                .filter(o => o.preview_url)
+                .sort((a, b) => a.popularity - b.popularity)[0],
+              playAudio: true
+            })
+          }
+        )
     }
   }),
-  pure
+  pure,
+  branch(
+    ({ currentSong }) => R.isEmpty(currentSong),
+    renderComponent(() => <div>LOADING</div>)
+  )
 )(PlayerPure)
 
 export default Player

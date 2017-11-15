@@ -33,8 +33,11 @@ const SearchPure = ({ id, searchText, changeSearchText, onSearch }) => (
   </AppContainer>
 )
 
-const splithash = hash => hash.split('=')
-const getToken = R.compose(R.prop(1), splithash, R.prop('hash'))
+const getTokenFromUrl = R.compose(
+  R.prop(1),
+  hash => hash.split('='),
+  R.prop('hash')
+)
 
 // eslint-disable-next-line
 SearchPure.propTypes = {
@@ -67,7 +70,8 @@ const Search = compose(
       // eslint-disable-next-line
       const { location } = this.props
       return (
-        getMeInformation(getToken(location))
+        storeItem({ key: 'token', item: getTokenFromUrl(location) })
+          .chain(res => getMeInformation(res.item))
           .chain(res => storeItem({ key: 'id', item: res.id }))
           // eslint-disable-next-line
           .fork(() => redirect('/'), res => this.setState({ id: res.item }))

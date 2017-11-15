@@ -51,24 +51,25 @@ export const ModalPure = ({
             width: '100%'
           }}
         >
-          {songArray.map(o => (
-            <div
-              key={o.id}
-              style={{
-                width: 'calc(100% - 36px)',
-                padding: '8px 16px',
-                margin: '4px',
-                borderRadius: '32px',
-                backgroundColor: 'green',
-                color: 'white'
-              }}
-            >
-              <p>{`${o.name}`}</p>
-              <p style={{ fontSize: '12px' }}>{`${o.artists.map(
-                o => o.name
-              )}`}</p>
-            </div>
-          ))}
+          {songArray.length > 0 &&
+            songArray.map(o => (
+              <div
+                key={o.id}
+                style={{
+                  width: 'calc(100% - 36px)',
+                  padding: '8px 16px',
+                  margin: '4px',
+                  borderRadius: '32px',
+                  backgroundColor: 'green',
+                  color: 'white'
+                }}
+              >
+                <p>{`${o.name}`}</p>
+                <p style={{ fontSize: '12px' }}>{`${o.artists.map(
+                  o => o.name
+                )}`}</p>
+              </div>
+            ))}
         </ScrollView>
         <TextInput onChange={onChangePlaylist} value={playlistName} />
         <div style={{ width: '192px' }}>
@@ -94,7 +95,9 @@ ModalPure.propTypes = {
 }
 
 // eslint-disable-next-line
-ModalPure.defaultProps = {}
+ModalPure.defaultProps = {
+  songArray: []
+}
 
 const ModalComposed = compose(pure)(ModalPure)
 
