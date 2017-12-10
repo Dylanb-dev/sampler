@@ -4,6 +4,7 @@ import isEqual from 'lodash/fp/isEqual'
 import format from 'date-fns/format'
 import PropTypes from 'prop-types'
 import * as R from 'ramda'
+import _ from 'lodash/fp'
 import { Motion, spring } from 'react-motion'
 import {
   lifecycle,
@@ -15,6 +16,8 @@ import {
   renderComponent
 } from 'recompose'
 
+import { withMouseEvent } from 'helpers/MouseEvent'
+import { storeItem } from 'helpers/localStorage'
 import {
   createPlaylist,
   search,
@@ -40,39 +43,15 @@ const [count, width, height] = [11, 70, 90]
 
 const randomNumber = maxLen => Math.floor(Math.random() * (maxLen + 1))
 
-const savePlaylist = ({ songArray, playlistName }) => {
-  this.setState({ saving: true })
-  window.localStorage.setItem('playlistName', playlistName)
-  window.localStorage.setItem('songArray', JSON.stringify(songArray))
-  window.location = '/save'
-}
+// const savePlaylist = ({ songArray, playlistName }) => {
+//   this.setState({ saving: true })
+//   window.localStorage.setItem('playlistName', playlistName)
+//   window.localStorage.setItem('songArray', JSON.stringify(songArray))
+//   window.location = '/save'
+// }
 
 // eslint-disable-next-line
 class PlayerPure extends Component {
-  handleTouchStart = (pressLocation, e) =>
-    this.handleMouseDown(pressLocation, e.touches[0])
-
-  handleTouchMove = e => {
-    this.handleMouseMove(e.touches[0])
-  }
-
-  handleMouseMove = ({ pageX, pageY }) => {
-    const { isPressed, mouseCircleDelta: [dx, dy] } = this.state
-
-    if (isPressed) {
-      const mouseXY = [pageX - dx, pageY - dy]
-      this.setState({ mouseXY })
-    }
-  }
-
-  handleMouseDown = ([pressX, pressY], { pageX, pageY }) => {
-    this.setState({
-      isPressed: true,
-      mouseCircleDelta: [pageX - pressX, pageY - pressY],
-      mouseXY: [pressX, pressY]
-    })
-  }
-
   playNextSong = () => {
     const { type, token, currentSong, songArray } = this.state
 
@@ -98,24 +77,24 @@ class PlayerPure extends Component {
       )
   }
 
-  handleMouseUp = () => {
-    const { appWidth, mouseXY, songArray, currentSong } = this.state
-    const [x, y] = mouseXY
+  // handleMouseUp = () => {
+  //   const { appWidth, mouseXY, songArray, currentSong } = this.state
+  //   const [x, y] = mouseXY
 
-    if (this.isAccept({ x, appWidth })) {
-      this.setState({ songArray: [...songArray, currentSong] })
-      this.resetAlbumPostion()
-      return this.playNextSong()
-    }
-    if (this.isDecline({ x, appWidth })) {
-      this.resetAlbumPostion()
-      return this.playNextSong()
-    }
-    return this.resetAlbumPostion()
-  }
+  //   if (this.isAccept({ x, appWidth })) {
+  //     this.setState({ songArray: [...songArray, currentSong] })
+  //     this.resetAlbumPostion()
+  //     return this.playNextSong()
+  //   }
+  //   if (this.isDecline({ x, appWidth })) {
+  //     this.resetAlbumPostion()
+  //     return this.playNextSong()
+  //   }
+  //   return this.resetAlbumPostion()
+  // }
 
-  isAccept = ({ x, appWidth }) => x > (appWidth - 128 * 1.2) / 2 - 10
-  isDecline = ({ x, appWidth }) => x < -((appWidth - 128 * 1.2) / 2 - 10)
+  // isAccept = ({ x, appWidth }) => x > (appWidth - 128 * 1.2) / 2 - 10
+  // isDecline = ({ x, appWidth }) => x < -((appWidth - 128 * 1.2) / 2 - 10)
 
   render() {
     const {
@@ -222,10 +201,11 @@ class PlayerPure extends Component {
                 style={{
                   height: '100%',
                   width: '100%',
-                  backgroundColor: `${isPressed &&
-                  this.isDecline({ x, appWidth })
-                    ? 'red'
-                    : 'transparent'}`,
+                  backgroundColor: `${
+                    isPressed && this.isDecline({ x, appWidth })
+                      ? 'red'
+                      : 'transparent'
+                  }`,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
@@ -277,11 +257,16 @@ class PlayerPure extends Component {
                     onTouchStart={this.handleTouchStart.bind(null, [x, y])}
                     style={{
                       borderRadius: '100%',
-                      WebkitTransform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-                      transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
+                      WebkitTransform: `translate3d(${translateX}px, ${
+                        translateY
+                      }px, 0) scale(${scale})`,
+                      transform: `translate3d(${translateX}px, ${
+                        translateY
+                      }px, 0) scale(${scale})`,
                       boxShadow: `${boxShadow}px 5px 5px rgba(0,0,0,0.5)`,
-                      backgroundImage: `url(${currentSong.album.images[0]
-                        .url})`,
+                      backgroundImage: `url(${
+                        currentSong.album.images[0].url
+                      })`,
                       height: '128px',
                       width: '128px',
                       margin: '32px',
@@ -308,7 +293,8 @@ class PlayerPure extends Component {
               >
                 <Button
                   onClick={() =>
-                    this.setState({ currentSong: {}, songArray: [] })}
+                    this.setState({ currentSong: {}, songArray: [] })
+                  }
                   secondary
                   text={'Back'}
                   isBlur={isPressed}
@@ -326,10 +312,11 @@ class PlayerPure extends Component {
                 style={{
                   height: '100%',
                   width: '100%',
-                  backgroundColor: `${isPressed &&
-                  this.isAccept({ x, appWidth })
-                    ? 'green'
-                    : 'transparent'}`,
+                  backgroundColor: `${
+                    isPressed && this.isAccept({ x, appWidth })
+                      ? 'green'
+                      : 'transparent'
+                  }`,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
@@ -356,15 +343,13 @@ class PlayerPure extends Component {
 }
 
 const Player = compose(
+  withMouseEvent,
   defaultProps({
-    mouseXY: [0, 0],
     savePlaylist: false,
-    isPressed: false,
-    mouseCircleDelta: [0, 0],
     appWidth: Math.min(420, window.innerWidth),
     songArray: [],
     currentSong: {},
-    playlistName: `Sampler ${format(new Date(), 'MM/DD/YYYY')}`,
+    playlistName: `Sampler ${format(Date.now(), 'MM/DD/YYYY')}`,
     playAudio: false
   }),
   withStateHandlers(
@@ -389,46 +374,33 @@ const Player = compose(
       savePlaylist: ({ songArray, playlistName }) => event => {
         // eslint-disable-next-line
         event.preventDefault()
-        this.setState({ saving: true })
-        window.localStorage.setItem('playlistName', playlistName)
-        window.localStorage.setItem('songArray', JSON.stringify(songArray))
-        window.location = '/save'
+        // eslint-disable-next-line fp/no-unused-expression
+        storeItem({ key: 'playlistName', item: playlistName })
+          .chain(() =>
+            storeItem({ key: 'songArray', item: JSON.stringify(songArray) })
+          )
+          .fork(console.error, redirect('/save'))
+        return { saving: true }
       }
     }
   ),
   lifecycle({
-    // eslint-disable-next-line
     componentDidMount() {
-      window.addEventListener('touchmove', ({ pageX, pageY }) => {
-        const { isPressed, mouseCircleDelta: [dx, dy] } = this.props
-        if (isPressed) {
-          const mouseXY = [pageX - dx, pageY - dy]
-          this.setState({ mouseXY })
-        }
-      })
-      window.addEventListener('touchend', this.handleMouseUp)
-      window.addEventListener('mousemove', this.handleMouseMove)
-      window.addEventListener('mouseup', this.handleMouseUp)
-
-      // eslint-disable-next-line
-      getItemFromStorage('token')
+      return getItemFromStorage('token')
         .chain(res => search(res)(window.location.query))
         .fork(
           () => redirect('/'),
-          res => {
-            if (res.error) {
-              redirect('/')
-            }
-
-            // eslint-disable-next-line
-            this.setState({
-              // eslint-disable-next-line
-              currentSong: res.tracks.items
-                .filter(o => o.preview_url)
-                .sort((a, b) => a.popularity - b.popularity)[0],
-              playAudio: true
-            })
-          }
+          res =>
+            res.error
+              ? redirect('/')
+              : // eslint-disable-next-line fp/no-this
+                this.setState({
+                  currentSong: res.tracks.items
+                    .filter(o => o.preview_url)
+                    .map(R.sort((a, b) => a.popularity - b.popularity))
+                    .map(R.head),
+                  playAudio: true
+                })
         )
     }
   }),

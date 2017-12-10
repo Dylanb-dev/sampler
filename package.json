@@ -46,6 +46,7 @@
     "prop-types": "^15.6.0",
     "ramda": "^0.25.0",
     "react-test-renderer": "^16.0.0",
-    "serverless-single-page-app-plugin": "file:./serverless-single-page-app-plugin"
+    "serverless-single-page-app-plugin":
+      "file:./serverless-single-page-app-plugin"
   }
 }

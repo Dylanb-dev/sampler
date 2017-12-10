@@ -20,7 +20,7 @@ import Text from 'components/text'
 const searchTrack = searchText =>
   redirect(`/player?${queryParams({ play: searchText })}`)
 
-const SearchPure = ({ id, searchText, changeSearchText, onSearch }) => (
+const SearchPure = ({ changeSearchText, searchText, onSearch, id }) => (
   <AppContainer>
     <div style={{ width: '100%', maxWidth: '420px' }}>
       <FlexVerticalCenter>
@@ -48,6 +48,7 @@ SearchPure.propTypes = {
 }
 
 const Search = compose(
+  pure,
   defaultProps({
     id: '-----------',
     searchText: 'muse',
@@ -77,8 +78,7 @@ const Search = compose(
           .fork(() => redirect('/'), res => this.setState({ id: res.item }))
       )
     }
-  }),
-  pure
+  })
 )(SearchPure)
 
 export default Search
